@@ -27,8 +27,16 @@ streamlit run streamlit_app.py
 ### Avant une PR
 
 1. Branche dédiée depuis `main`
-2. Checks locaux : `ruff check .` et `pytest`
-3. Ne committe **jamais** `.env`, `.streamlit/secrets.toml`, secrets
+2. Installer les hooks : `pre-commit install && pre-commit install --hook-type pre-push`
+3. Checks locaux : `bash scripts/run_all_checks.sh` (ou `pytest` + `ruff check .`)
+4. Ne committe **jamais** `.env`, `.streamlit/secrets.toml`, secrets
+
+La CI GitHub (`.github/workflows/ci.yml`) doit être sur `main`. Si le push est refusé (scope `workflow`), lance une fois :
+
+```bash
+gh auth refresh -h github.com -s repo,workflow
+git add .github/workflows/ci.yml && git commit -m "ci: enable full GitHub Actions suite" && git push
+```
 
 ### Contenu de jeu
 

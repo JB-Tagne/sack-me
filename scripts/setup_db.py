@@ -1,6 +1,6 @@
 """
-Initialise la base sackme : rôle, database, schéma, seed.
-Usage : python scripts/setup_db.py
+Initialize the sackme database: role, database, schema, seed.
+Usage: python scripts/setup_db.py
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from psycopg import sql
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env")
 
-# Connexion admin (superuser créé à l'install Windows, ou postgres Docker)
+# Admin connection (Windows install superuser, or Docker postgres)
 ADMIN_URL = os.getenv(
     "POSTGRES_ADMIN_URL",
     "postgresql://postgres:sackme@localhost:5432/postgres",
@@ -39,9 +39,9 @@ def main() -> None:
     try:
         admin = psycopg.connect(ADMIN_URL, autocommit=True)
     except psycopg.Error as exc:
-        print("Connexion admin impossible.")
+        print("Admin connection failed.")
         print(f"  {exc}")
-        print("\nVérifie que PostgreSQL tourne et POSTGRES_ADMIN_URL dans .env")
+        print("\nCheck that PostgreSQL is running and POSTGRES_ADMIN_URL in .env")
         sys.exit(1)
 
     with admin:
@@ -54,9 +54,9 @@ def main() -> None:
                         sql.Literal(APP_PASSWORD),
                     )
                 )
-                print(f"  OK  rôle {APP_USER}")
+                print(f"  OK  role {APP_USER}")
             else:
-                print(f"  ·   rôle {APP_USER} existe")
+                print(f"  ·   role {APP_USER} exists")
 
             cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (APP_DB,))
             if not cur.fetchone():
@@ -68,7 +68,7 @@ def main() -> None:
                 )
                 print(f"  OK  database {APP_DB}")
             else:
-                print(f"  ·   database {APP_DB} existe")
+                print(f"  ·   database {APP_DB} exists")
 
             cur.execute(
                 sql.SQL("GRANT ALL PRIVILEGES ON DATABASE {} TO {}").format(
@@ -78,7 +78,7 @@ def main() -> None:
             )
 
     app_url = f"postgresql://{APP_USER}:{APP_PASSWORD}@localhost:5432/{APP_DB}"
-    # Aussi en superuser pour CREATE EXTENSION
+    # Also as superuser for CREATE EXTENSION
     try:
         conn = psycopg.connect(
             ADMIN_URL.replace("/postgres", f"/{APP_DB}"),
@@ -89,7 +89,7 @@ def main() -> None:
 
     with conn:
         run_sql_file(conn, ROOT / "sql" / "schema.sql")
-        # Droits sur le schéma public pour sackme
+        # Privileges on public schema for sackme
         with conn.cursor() as cur:
             cur.execute(
                 sql.SQL("GRANT ALL ON SCHEMA public TO {}").format(
@@ -115,8 +115,8 @@ def main() -> None:
         conn.commit()
         run_sql_file(conn, ROOT / "sql" / "seed.sql")
 
-    print(f"\nPrêt. DATABASE_URL={app_url}")
-    print("Lance : python app.py")
+    print(f"\nReady. DATABASE_URL={app_url}")
+    print("Run: python app.py")
 
 
 if __name__ == "__main__":

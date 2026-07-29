@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# Lance toute la batterie de checks (comme la CI), en local.
+# Run the full local check suite (mirrors CI).
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+echo "== Sync game content =="
+python scripts/sync_game_content.py --check
 
 echo "== Ruff =="
 ruff check .
 
-echo "== Unit + coverage (ligne a ligne) =="
+echo "== Unit + line coverage =="
 pytest -q \
   tests/test_evaluate.py \
   tests/test_career.py \

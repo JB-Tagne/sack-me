@@ -1,10 +1,11 @@
 """
-Contenu MVP embarqué — fallback si PostgreSQL est indisponible
-(Streamlit Community Cloud, démo locale sans Docker).
+Embedded MVP content — fallback when PostgreSQL is unavailable
+(Streamlit Community Cloud, local demo without Docker).
 """
 
 from __future__ import annotations
 
+# BEGIN AUTO:ENTITIES
 ENTITIES = [
     {
         "id": "assurance",
@@ -62,7 +63,16 @@ ENTITIES = [
         "blurb_fr": "Filière agricole, traçabilité, stocks et coopératives.",
         "blurb_en": "Agri supply chain, traceability, stock and co-ops.",
     },
+    {
+        "id": "health",
+        "name": "Mutualis Health",
+        "domain_fr": "Santé / parcours patient",
+        "domain_en": "Health / patient journeys",
+        "blurb_fr": "Dossiers patients, parcours de soins, facturation et conformité santé.",
+        "blurb_en": "Patient records, care pathways, billing and health compliance.",
+    },
 ]
+# END AUTO:ENTITIES
 
 PROJECT_KINDS = [
     {
@@ -211,8 +221,8 @@ QUESTIONS = [
     {
         "step_id": "L0-S0",
         "kind": "gov",
-        "question_fr": "Qui valide la définition du KPI « sinistre ouvert » ?",
-        "question_en": "Who validates the definition of the \"open claim\" KPI?",
+        "question_fr": "Qui valide la définition du KPI « sinistre ouvert » (Mutualis Assurance) ou « séjour ouvert » (Mutualis Health) ?",
+        "question_en": "Who validates the definition of the \"open claim\" KPI (Mutualis Assurance) or \"open stay\" (Mutualis Health)?",
         "option_a_fr": "Le développeur qui connaît la table",
         "option_a_en": "The developer who knows the table",
         "option_b_fr": "Le data steward / métier propriétaire de la donnée",
@@ -220,8 +230,8 @@ QUESTIONS = [
         "option_c_fr": "N'importe qui du COMEX",
         "option_c_en": "Anyone from the exec committee",
         "correct_index": 1,
-        "correction_fr": "La définition métier appartient au steward / owner, pas au codeur seul.",
-        "correction_en": "The business definition belongs to the steward/owner, not the coder alone.",
+        "correction_fr": "La définition métier appartient au steward / owner, pas au codeur seul — y compris en santé.",
+        "correction_en": "The business definition belongs to the steward/owner, not the coder alone — including in health.",
         "framework_ref": "DAMA",
     },
     {

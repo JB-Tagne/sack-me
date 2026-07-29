@@ -1,6 +1,6 @@
 """
-Sack Me! — serious game CLI (gestion de projet / gouvernance data).
-Progression et contenu lus/écrits dans PostgreSQL.
+Sack Me! — serious game CLI (project management / data governance).
+Progression and content are read/written in PostgreSQL.
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ def clear() -> None:
 
 
 def _configure_stdout() -> None:
-    """Évite les UnicodeEncodeError sur consoles Windows (cp1252)."""
+    """Avoid UnicodeEncodeError on Windows consoles (cp1252)."""
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
@@ -62,7 +62,7 @@ def _configure_stdout() -> None:
             pass
 
 
-def pause(msg: str = "Entrée pour continuer…") -> None:
+def pause(msg: str = "Press Enter to continue…") -> None:
     input(f"\n{msg}")
 
 
@@ -71,7 +71,7 @@ def banner() -> None:
         """
 ================================================
               SACK ME!
-   Carriere PM / Gouvernance · Mutualis
+   Career PM / Governance · Mutualis
 ================================================
 """
     )
@@ -84,12 +84,12 @@ def ask_choice(prompt: str, n: int) -> int:
             i = int(raw)
             if 1 <= i <= n:
                 return i - 1
-        print(f"  Choix invalide. Entre un nombre entre 1 et {n}.")
+        print(f"  Invalid choice. Enter a number between 1 and {n}.")
 
 
 def ask_multiline(hint: str) -> str:
     print(f"\n{hint}")
-    print("(Termine par une ligne contenant seulement END)\n")
+    print("(Finish with a line containing only END)\n")
     lines: list[str] = []
     while True:
         line = input()
@@ -103,11 +103,11 @@ def connect() -> psycopg.Connection:
     try:
         return psycopg.connect(DATABASE_URL, row_factory=dict_row)
     except psycopg.Error as exc:
-        print("Impossible de se connecter à PostgreSQL.")
+        print("Unable to connect to PostgreSQL.")
         print(f"  URL : {DATABASE_URL}")
-        print(f"  Erreur : {exc}")
-        print("\nDémarre la base : docker compose up -d")
-        print("Puis vérifie .env (copie depuis .env.example).")
+        print(f"  Error : {exc}")
+        print("\nStart the database: docker compose up -d")
+        print("Then check .env (copy from .env.example).")
         sys.exit(1)
 
 
@@ -128,7 +128,7 @@ def execute(conn: psycopg.Connection, sql: str, params: tuple[Any, ...] = ()) ->
     conn.commit()
 
 
-# ─── Modèle joueur ──────────────────────────────────────────────
+# ─── Player model ───────────────────────────────────────────────
 
 
 @dataclass
@@ -223,31 +223,31 @@ def hud(conn: psycopg.Connection, p: Player) -> None:
     print(f"-- {poste}  |  score {p.career_score}  |  fireRisk {p.fire_risk}%  |  +{p.wins} -{p.fails}")
 
 
-# ─── Phases de jeu ──────────────────────────────────────────────
+# ─── Game phases ────────────────────────────────────────────────
 
 
 def phase_career_pick(conn: psycopg.Connection, p: Player) -> None:
     clear()
     banner()
-    print("Choisis ta filiale Mutualis Group.\n")
+    print("Choose your Mutualis Group subsidiary.\n")
     entities = fetch_all(conn, "SELECT * FROM entities ORDER BY name")
     for i, e in enumerate(entities, 1):
         print(f"  {i}. {e['name']} — {loc(e, 'domain', p.locale)}")
         print(f"     {loc(e, 'blurb', p.locale)}")
-    p.entity_id = entities[ask_choice("Filiale", len(entities))]["id"]
+    p.entity_id = entities[ask_choice("Subsidiary", len(entities))]["id"]
 
     clear()
     banner()
-    print("Type de projet.\n")
+    print("Project type.\n")
     kinds = fetch_all(conn, "SELECT * FROM project_kinds ORDER BY id")
     for i, k in enumerate(kinds, 1):
         print(f"  {i}. {loc(k, 'label', p.locale)}")
         print(f"     {loc(k, 'hint', p.locale)}")
-    p.project_kind = kinds[ask_choice("Projet", len(kinds))]["id"]
+    p.project_kind = kinds[ask_choice("Project", len(kinds))]["id"]
 
     clear()
     banner()
-    print("Choisis ton rôle.\n")
+    print("Choose your role.\n")
     allowed = IT_ROLE_IDS if p.project_kind == "it" else DATA_AI_ROLE_IDS
     roles = fetch_all(
         conn,
@@ -255,9 +255,9 @@ def phase_career_pick(conn: psycopg.Connection, p: Player) -> None:
         (list(allowed),),
     )
     for i, r in enumerate(roles, 1):
-        track = "PM" if r["track"] == "pm" else "Gouvernance"
+        track = "PM" if r["track"] == "pm" else "Governance"
         print(f"  {i}. {loc(r, 'label', p.locale)}  [{track}]")
-    p.role_id = roles[ask_choice("Rôle", len(roles))]["id"]
+    p.role_id = roles[ask_choice("Role", len(roles))]["id"]
 
     p.phase = "playing"
     p.level_id = 0
@@ -269,9 +269,9 @@ def phase_career_pick(conn: psycopg.Connection, p: Player) -> None:
     role = fetch_one(conn, "SELECT * FROM roles WHERE id = %s", (p.role_id,))
     clear()
     banner()
-    print(f"Tu rejoins {ent['name'] if ent else p.entity_id}.")
-    print(f"Rôle : {loc(role, 'label', p.locale) if role else p.role_id}")
-    print("Toute mauvaise décision te rapproche de la sortie.\n")
+    print(f"You join {ent['name'] if ent else p.entity_id}.")
+    print(f"Role : {loc(role, 'label', p.locale) if role else p.role_id}")
+    print("Every bad decision brings you closer to the exit.\n")
     pause()
 
 
@@ -300,7 +300,7 @@ def play_qcm(conn: psycopg.Connection, p: Player, q: dict, mode: str) -> bool:
     ]
     for i, o in enumerate(opts, 1):
         print(f"  {i}. {o}")
-    choice = ask_choice("Réponse", 3)
+    choice = ask_choice("Answer", 3)
     passed = choice == int(q["correct_index"])
     apply_outcome(p, passed, mode)
     print()
@@ -318,15 +318,15 @@ def play_tech(conn: psycopg.Connection, p: Player, step: dict) -> bool:
     expect = step["expect_type"]
     print(f"\n[TECH · {expect.upper()}]")
     print(loc(step, "do", p.locale))
-    text = ask_multiline("Colle ton livrable :")
+    text = ask_multiline("Paste your deliverable:")
     keywords = list(step.get("keywords") or [])
     passed = evaluate_script(expect, text, keywords)
     apply_outcome(p, passed, "tech")
     print()
     if passed:
-        print("OK — Livrable valide.")
+        print("OK — Valid deliverable.")
     else:
-        print("KO — Livrable insuffisant.")
+        print("KO — Insufficient deliverable.")
         print(f"  -> {loc(step, 'correction', p.locale)}")
     return passed
 
@@ -346,7 +346,7 @@ def mark_step_done(conn: psycopg.Connection, p: Player, step_id: str) -> None:
 def phase_playing(conn: psycopg.Connection, p: Player) -> None:
     levels = fetch_all(conn, "SELECT * FROM adventure_levels ORDER BY id")
     if not levels:
-        print("Aucun niveau en base. Vérifie sql/seed.sql.")
+        print("No levels in the database. Check sql/seed.sql.")
         p.phase = "done"
         save_player(conn, p)
         return
@@ -372,13 +372,13 @@ def phase_playing(conn: psycopg.Connection, p: Player) -> None:
     banner()
     hud(conn, p)
     if level:
-        print(f"\nNiveau {p.level_id} — {loc(level, 'title', p.locale)}")
+        print(f"\nLevel {p.level_id} — {loc(level, 'title', p.locale)}")
         if p.step_index == 0 and p.step_half == "pm":
             print(loc(level, "intro", p.locale))
-    print(f"\nÉtape : {loc(step, 'title', p.locale)}")
+    print(f"\nStep : {loc(step, 'title', p.locale)}")
     print(loc(step, "say", p.locale))
 
-    # Demi-étapes : pm → tech → gov
+    # Half-steps: pm → tech → gov
     if p.step_half == "pm":
         q = get_question(conn, step["id"], "pm")
         if q:
@@ -412,9 +412,9 @@ def phase_fired(conn: psycopg.Connection, p: Player) -> None:
         print()
         print(loc(meeting, "closing", p.locale))
     else:
-        print("COMEX — Tu es sacké. fireRisk à 100%.")
-    print(f"\nBilan : score {p.career_score} · victoires {p.wins} · échecs {p.fails}")
-    pause("Entrée pour quitter…")
+        print("COMEX — You are sacked. fireRisk at 100%.")
+    print(f"\nSummary : score {p.career_score} · wins {p.wins} · fails {p.fails}")
+    pause("Press Enter to quit…")
     p.phase = "ended"
     save_player(conn, p)
 
@@ -424,10 +424,10 @@ def phase_done(conn: psycopg.Connection, p: Player) -> None:
     banner()
     hud(conn, p)
     title = title_for_score(conn, p.career_score, p.locale)
-    print("\nIncrement MVP terminé. Tu tiens encore ton poste.")
-    print(f"Grade final : {loc(title, 'label', p.locale)}")
+    print("\nMVP Increment complete. You still have your job.")
+    print(f"Final grade : {loc(title, 'label', p.locale)}")
     print(f"fireRisk : {p.fire_risk}%")
-    pause("Entrée pour quitter…")
+    pause("Press Enter to quit…")
     p.phase = "ended"
     save_player(conn, p)
 
@@ -448,7 +448,7 @@ def new_player(conn: psycopg.Connection, locale: str = "fr") -> Player:
     )
     conn.commit()
     if row is None:
-        raise RuntimeError("INSERT players n'a rien retourné")
+        raise RuntimeError("INSERT players returned nothing")
     return row_to_player(row)
 
 
@@ -460,27 +460,27 @@ def load_player(conn: psycopg.Connection, session_key: str) -> Player | None:
 def main_menu(conn: psycopg.Connection) -> Player:
     clear()
     banner()
-    print("  1. Nouvelle partie")
-    print("  2. Continuer (code session)")
-    print("  3. Quitter")
+    print("  1. New game")
+    print("  2. Continue (session code)")
+    print("  3. Quit")
     choice = ask_choice("Menu", 3)
     if choice == 0:
         return new_player(conn)
     if choice == 1:
-        key = input("Code session : ").strip()
+        key = input("Session code : ").strip()
         p = load_player(conn, key)
         if not p:
-            print("Session introuvable.")
+            print("Session not found.")
             pause()
             return main_menu(conn)
-        print(f"Session {p.session_key} reprise (phase={p.phase}).")
+        print(f"Session {p.session_key} resumed (phase={p.phase}).")
         pause()
         return p
     sys.exit(0)
 
 
 def game_loop(conn: psycopg.Connection, p: Player) -> None:
-    print(f"\nCode session (à garder) : {p.session_key}\n")
+    print(f"\nSession code (keep it) : {p.session_key}\n")
     pause()
     while p.phase not in ("ended",):
         if p.phase == "career-pick":
@@ -492,21 +492,21 @@ def game_loop(conn: psycopg.Connection, p: Player) -> None:
         elif p.phase == "done":
             phase_done(conn, p)
         else:
-            print(f"Phase inconnue : {p.phase}")
+            print(f"Unknown phase : {p.phase}")
             break
 
 
 def main() -> None:
     _configure_stdout()
     with connect() as conn:
-        # Smoke-check contenu
+        # Smoke-check content
         n = fetch_one(conn, "SELECT COUNT(*) AS c FROM entities")
         if not n or int(n["c"]) == 0:
-            print("Base vide : lance docker compose up -d (init schema + seed).")
+            print("Empty database: run docker compose up -d (init schema + seed).")
             sys.exit(1)
         player = main_menu(conn)
         game_loop(conn, player)
-        print("\nÀ bientôt chez Mutualis — ou pas.")
+        print("\nSee you at Mutualis — or not.")
 
 
 if __name__ == "__main__":

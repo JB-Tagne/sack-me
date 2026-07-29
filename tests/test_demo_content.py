@@ -18,8 +18,11 @@ from demo_content import (
 
 def test_entities_count_and_ids_unique() -> None:
     ids = [e["id"] for e in ENTITIES]
-    assert len(ids) >= 7
+    assert len(ids) >= 8
     assert len(ids) == len(set(ids))
+    assert "health" in ids
+    health = next(e for e in ENTITIES if e["id"] == "health")
+    assert health["name"] == "Mutualis Health"
     for e in ENTITIES:
         assert e["name"].startswith("Mutualis")
         assert e["domain_fr"] and e["domain_en"]

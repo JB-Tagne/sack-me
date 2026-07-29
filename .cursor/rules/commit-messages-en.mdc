@@ -1,0 +1,34 @@
+---
+description: All GitHub commit messages must be written in English
+alwaysApply: true
+---
+
+# Commit messages (English only)
+
+Every `git commit` message for this repo **must be in English**.
+
+## Format
+
+- Imperative mood, present tense: `Add…`, `Fix…`, `Update…`, `Remove…`
+- Subject ≤ ~72 characters, no trailing period
+- Optional body in English explaining *why*
+- No French words, accents, or bilingual subjects
+
+## Examples
+
+```text
+# Good
+Add Mutualis Health subsidiary and sync catalog
+
+# Good
+Fix Streamlit deploy path for Community Cloud
+
+# Bad
+Ajoute Mutualis Health
+# Bad
+Mise à jour du README
+# Bad
+Add filiale Health / ajoute Health
+```
+
+When committing for the user, always draft the message in English.

@@ -53,7 +53,7 @@ export interface RoleContentProfile {
   focusMissionsEn: string[]
 }
 
-const PROFILES: Record<PlayerRoleId, RoleContentProfile> = {
+export const PROFILES: Record<PlayerRoleId, RoleContentProfile> = {
   'business-analyst': {
     track: 'pm',
     decisionTitleFr: 'Business Analyst',

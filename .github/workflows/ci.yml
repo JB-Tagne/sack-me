@@ -25,7 +25,9 @@ jobs:
           cache: pip
       - run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Sync game content check
+        run: python scripts/sync_game_content.py --check
       - run: ruff check .
 
   unit:
@@ -178,6 +180,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Export TS tables to SQL
+        run: npm run export:sql
       - run: npm run build
 
   gate:

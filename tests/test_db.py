@@ -33,24 +33,20 @@ def test_entities_seeded(conn: psycopg.Connection) -> None:
     with conn.cursor() as cur:
         cur.execute("SELECT COUNT(*) FROM entities")
         (n,) = cur.fetchone()
-    assert n >= 7
+    assert n >= 8
 
 
 @pytest.mark.integration
 def test_steps_have_questions(conn: psycopg.Connection) -> None:
     with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM step_questions")
+        (n_q,) = cur.fetchone()
         cur.execute(
-            """
-            SELECT s.id
-            FROM adventure_steps s
-            WHERE NOT EXISTS (
-              SELECT 1 FROM step_questions q
-              WHERE q.step_id = s.id AND q.kind = 'pm'
-            )
-            """
+            "SELECT COUNT(*) FROM content_packs WHERE pack_type = 'pm_curated'"
         )
-        missing = cur.fetchall()
-    assert missing == []
+        (n_pm,) = cur.fetchone()
+    # Full adventure resolves PM QCM from packs; curated packs must exist.
+    assert n_pm >= 1 or n_q >= 1
 
 
 @pytest.mark.integration

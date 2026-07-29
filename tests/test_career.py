@@ -1,4 +1,4 @@
-"""Unit tests for career scoring (ligne à ligne sur apply_outcome / clamp)."""
+"""Unit tests for career scoring (line-by-line on apply_outcome / clamp)."""
 
 from __future__ import annotations
 

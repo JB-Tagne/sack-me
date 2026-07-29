@@ -69,7 +69,7 @@ def test_no_high_entropy_cloud_secrets_in_repo() -> None:
 
 
 def test_evaluate_script_does_not_exec_payload() -> None:
-    """Le validateur lit le texte ; il ne doit jamais exécuter le livrable."""
+    """The validator reads the text; it must never execute the deliverable."""
     from game_logic import evaluate_script
 
     bomb = "__import__('os').system('echo pwned')"

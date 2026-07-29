@@ -7,6 +7,7 @@
 import type { PmGameLocale } from '../../i18n/pmGameLocale'
 import type { ProjectPhase } from './tools'
 
+// BEGIN AUTO:ENTITY_ID
 export type MutualisEntityId =
   | 'assurance'
   | 'bank'
@@ -15,6 +16,8 @@ export type MutualisEntityId =
   | 'energy'
   | 'media'
   | 'agro'
+  | 'health'
+// END AUTO:ENTITY_ID
 
 export interface MutualisEntity {
   id: MutualisEntityId
@@ -26,6 +29,7 @@ export interface MutualisEntity {
 
 export const MUTUALIS_GROUP_NAME = 'Mutualis Group'
 
+// BEGIN AUTO:ENTITIES
 export const MUTUALIS_ENTITIES: readonly MutualisEntity[] = [
   {
     id: 'assurance',
@@ -77,7 +81,7 @@ export const MUTUALIS_ENTITIES: readonly MutualisEntity[] = [
     name: 'Mutualis Media',
     domain: { fr: 'Média / audience', en: 'Media / audience' },
     blurb: {
-      fr: 'Contenus, audience, pub programmatique et mesures d’impact.',
+      fr: 'Contenus, audience, pub programmatique et mesures d\'impact.',
       en: 'Content, audience, programmatic ads and impact measurement.',
     },
   },
@@ -90,7 +94,17 @@ export const MUTUALIS_ENTITIES: readonly MutualisEntity[] = [
       en: 'Agri supply chain, traceability, stock and co-ops.',
     },
   },
+  {
+    id: 'health',
+    name: 'Mutualis Health',
+    domain: { fr: 'Santé / parcours patient', en: 'Health / patient journeys' },
+    blurb: {
+      fr: 'Dossiers patients, parcours de soins, facturation et conformité santé.',
+      en: 'Patient records, care pathways, billing and health compliance.',
+    },
+  },
 ] as const
+// END AUTO:ENTITIES
 
 export function isMutualisEntityId(v: unknown): v is MutualisEntityId {
   return typeof v === 'string' && MUTUALIS_ENTITIES.some((e) => e.id === v)
@@ -298,6 +312,32 @@ const DOMAIN_BEATS: Record<
     ops: {
       fr: 'Récolte : pic d’ingestion qui sature le lac data.',
       en: 'Harvest: ingestion peak saturates the data lake.',
+    },
+  },
+  health: {
+    cadrage: {
+      fr: 'Parcours patient digital (RDV, dossier, sortie) face au SI hospitalier legacy.',
+      en: 'Digital patient journey (appointments, record, discharge) vs legacy hospital systems.',
+    },
+    ingestion: {
+      fr: 'Comptes rendus, imagerie et flux labo : formats HL7/FHIR incomplets.',
+      en: 'Reports, imaging and lab feeds: incomplete HL7/FHIR formats.',
+    },
+    transformation: {
+      fr: 'Identité patient multi-établissements : rapprochement sans collision NIR.',
+      en: 'Cross-facility patient identity: matching without ID collisions.',
+    },
+    gouvernance: {
+      fr: 'Données de santé : consentement, minimisation et accès strict par rôle soignant.',
+      en: 'Health data: consent, minimization and strict role-based clinical access.',
+    },
+    exposition: {
+      fr: 'COMEX Health compare « durée de séjour » et « coût épisode » sur deux grains.',
+      en: 'Health board compares “length of stay” and “episode cost” at two grains.',
+    },
+    ops: {
+      fr: 'Pic épidémique : le run parcours patient doit tenir sans figer la facturation.',
+      en: 'Epidemic peak: patient-pathway run must hold without freezing billing.',
     },
   },
 }

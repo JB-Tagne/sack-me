@@ -73,9 +73,30 @@ python app.py
 5. URL publique typique : `https://sack-me.streamlit.app`  
    Mets à jour `STREAMLIT_LIVE_URL` / secret si le sous-domaine diffère
 
+### Contenu de jeu (SQL = source de vérité)
+
+Les tables de contenu (ex-`src/data/dataStack/*.ts`) vivent dans PostgreSQL :
+
+```bash
+npm run export:sql                 # régénère sql/seed_from_ts.sql depuis le TS
+python scripts/apply_ts_sql.py     # charge schema étendu + seed dans Postgres
+```
+
+Voir [`src/data/dataStack/README.md`](src/data/dataStack/README.md) et [`sql/schema.sql`](sql/schema.sql).
+
+Filiales (catalogue YAML) :
+
+```bash
+python scripts/sync_game_content.py --write
+python scripts/sync_game_content.py --check
+```
+
 ### Contenu MVP
 
-- 7 filiales Mutualis + 2 types de projet (IT / Data-IA)
+- 8 filiales Mutualis + 2 types de projet (IT / Data-IA)
+- 9 rôles (piste PM ou Gouvernance)
+- 2 niveaux, 4 étapes (QCM PM → livrable tech → QCM gouvernance)
+- `fireRisk` : trop d’erreurs → COMEX / licenciement
 - 9 rôles (piste PM ou Gouvernance)
 - 2 niveaux, 4 étapes (QCM PM → livrable tech → QCM gouvernance)
 - `fireRisk` : trop d’erreurs → COMEX / licenciement
@@ -196,9 +217,20 @@ python app.py
 5. Public URL typically: `https://sack-me.streamlit.app`  
    Update `STREAMLIT_LIVE_URL` / secret if the subdomain differs
 
+### Game content (auto-sync)
+
+Source of truth for subsidiaries: [`data/catalog/entities.yaml`](data/catalog/entities.yaml)
+
+```bash
+python scripts/sync_game_content.py --write   # regenerate SQL + demo + TS + README
+python scripts/sync_game_content.py --check   # CI / pre-commit
+```
+
+The pre-commit hook runs `--write` then `--check` on every commit.
+
 ### MVP content
 
-- 7 Mutualis subsidiaries + 2 project kinds (IT / Data-AI)
+- 8 Mutualis subsidiaries + 2 project kinds (IT / Data-AI)
 - 9 roles (PM or Governance track)
 - 2 levels, 4 steps (PM quiz → tech deliverable → governance quiz)
 - `fireRisk`: too many mistakes → exec committee / fired

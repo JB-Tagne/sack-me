@@ -50,7 +50,7 @@ describe('role content adaptation', () => {
     expect(b.home.name).toBe('Mutualis Energy')
     expect(a.domainProblem.length).toBeGreaterThan(10)
     expect(b.domainProblem).not.toBe(a.domainProblem)
-    expect(MUTUALIS_ENTITIES).toHaveLength(7)
+    expect(MUTUALIS_ENTITIES).toHaveLength(8)
   })
 
   it('adapts briefing with home entity and domain problem', () => {

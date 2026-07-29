@@ -1,4 +1,4 @@
-"""Logique pure du jeu — couverte ligne à ligne par les tests unitaires."""
+"""Pure game logic — covered line-by-line by unit tests."""
 
 from __future__ import annotations
 

@@ -21,7 +21,7 @@ export interface ToolOnboarding {
   withoutAccount: string
 }
 
-const GUIDES: Record<ToolId, ToolOnboarding> = {
+export const GUIDES: Record<ToolId, ToolOnboarding> = {
   jira: {
     toolId: 'jira',
     platformLabel: 'Atlassian Jira (Cloud Free)',

@@ -3,6 +3,7 @@
 
 -- ─── Filiales Mutualis ────────────────────────────────────────
 
+-- BEGIN AUTO:ENTITIES
 INSERT INTO entities (id, name, domain_fr, domain_en, blurb_fr, blurb_en) VALUES
   ('assurance', 'Mutualis Assurance', 'Assurance / sinistres', 'Insurance / claims',
    'Contrats, sinistres, fraude, parcours digital assuré.',
@@ -24,8 +25,12 @@ INSERT INTO entities (id, name, domain_fr, domain_en, blurb_fr, blurb_en) VALUES
    'Content, audience, programmatic ads and impact measurement.'),
   ('agro', 'Mutualis Agro', 'Agro / filière', 'Agri / supply chain',
    'Filière agricole, traçabilité, stocks et coopératives.',
-   'Agri supply chain, traceability, stock and co-ops.')
+   'Agri supply chain, traceability, stock and co-ops.'),
+  ('health', 'Mutualis Health', 'Santé / parcours patient', 'Health / patient journeys',
+   'Dossiers patients, parcours de soins, facturation et conformité santé.',
+   'Patient records, care pathways, billing and health compliance.')
 ON CONFLICT (id) DO NOTHING;
+-- END AUTO:ENTITIES
 
 -- ─── Types de projet ──────────────────────────────────────────
 
@@ -150,8 +155,8 @@ INSERT INTO step_questions (
    'Without testable criteria, UAT fails and fireRisk rises.',
    'DoR'),
   ('L0-S0', 'gov',
-   'Qui valide la définition du KPI « sinistre ouvert » ?',
-   'Who validates the definition of the "open claim" KPI?',
+   'Qui valide la définition du KPI « sinistre ouvert » (Mutualis Assurance) ou « séjour ouvert » (Mutualis Health) ?',
+   'Who validates the definition of the "open claim" KPI (Mutualis Assurance) or "open stay" (Mutualis Health)?',
    'Le développeur qui connaît la table',
    'The developer who knows the table',
    'Le data steward / métier propriétaire de la donnée',
@@ -159,8 +164,8 @@ INSERT INTO step_questions (
    'N''importe qui du COMEX',
    'Anyone from the exec committee',
    1,
-   'La définition métier appartient au steward / owner, pas au codeur seul.',
-   'The business definition belongs to the steward/owner, not the coder alone.',
+   'La définition métier appartient au steward / owner, pas au codeur seul — y compris en santé.',
+   'The business definition belongs to the steward/owner, not the coder alone — including in health.',
    'DAMA'),
   ('L0-S1', 'pm',
    'Le SELECT de contrôle échoue en revue. Que fais-tu ?',

@@ -33,7 +33,7 @@ def test_evaluate_sql_throughput(benchmark) -> None:
 
 
 def test_evaluate_batch_under_budget() -> None:
-    """1000 validations SQL doivent rester sous 250 ms (machine CI standard)."""
+    """1000 SQL validations must stay under 250 ms (standard CI machine)."""
     text = "SELECT COUNT(*) FROM clients WHERE id IS NOT NULL"
     kws = ["select", "count", "null", "where"]
     t0 = time.perf_counter()
@@ -53,7 +53,7 @@ def test_demo_content_lookup_under_budget() -> None:
 
 
 def test_import_app_under_budget() -> None:
-    """Import froid approximatif via rechargement contrôlé — budget large."""
+    """Approximate cold import via controlled reload — generous budget."""
     import importlib
     import sys
 

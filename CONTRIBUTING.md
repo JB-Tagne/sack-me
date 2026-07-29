@@ -27,16 +27,16 @@ streamlit run streamlit_app.py
 ### Avant une PR
 
 1. Branche dédiée depuis `main`
-2. Installer les hooks : `pre-commit install && pre-commit install --hook-type pre-push`
-3. Checks locaux : `bash scripts/run_all_checks.sh` (ou `pytest` + `ruff check .`)
-4. Ne committe **jamais** `.env`, `.streamlit/secrets.toml`, secrets
-
-La CI GitHub (`.github/workflows/ci.yml`) doit être sur `main`. Si le push est refusé (scope `workflow`), lance une fois :
-
-```bash
-gh auth refresh -h github.com -s repo,workflow
-git add .github/workflows/ci.yml && git commit -m "ci: enable full GitHub Actions suite" && git push
-```
+2. Contenu jeu : éditer `data/catalog/entities.yaml` puis `python scripts/sync_game_content.py --write`
+3. Installer les hooks :
+   ```bash
+   pre-commit install
+   pre-commit install --hook-type pre-push
+   pre-commit install --hook-type commit-msg
+   ```
+4. Checks locaux : `bash scripts/run_all_checks.sh`
+5. **Messages de commit GitHub en anglais uniquement** (impératif : `Add…` / `Fix…` / `Update…`)
+6. Ne committe **jamais** `.env`, `.streamlit/secrets.toml`, secrets
 
 ### Contenu de jeu
 
@@ -74,8 +74,16 @@ streamlit run streamlit_app.py
 ### Before a PR
 
 1. Feature branch from `main`
-2. Local checks: `ruff check .` and `pytest`
-3. Never commit `.env`, `.streamlit/secrets.toml`, or secrets
+2. Game content: edit `data/catalog/entities.yaml` then `python scripts/sync_game_content.py --write`
+3. Install hooks:
+   ```bash
+   pre-commit install
+   pre-commit install --hook-type pre-push
+   pre-commit install --hook-type commit-msg
+   ```
+4. Local checks: `bash scripts/run_all_checks.sh`
+5. **GitHub commit messages must be English only** (imperative: `Add…` / `Fix…` / `Update…`)
+6. Never commit `.env`, `.streamlit/secrets.toml`, or secrets
 
 ### Game content
 

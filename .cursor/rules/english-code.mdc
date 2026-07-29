@@ -1,0 +1,33 @@
+---
+description: All scripts and code (comments, docstrings, messages) must be English
+alwaysApply: true
+---
+
+# English-only code
+
+All **scripts and source code** in this repo must be written in English:
+
+- Comments and docstrings
+- Log / print / error / argparse messages
+- Hardcoded UI labels in CLI and Streamlit
+- SQL schema/migration comments
+- Commit messages (see commit-messages-en.mdc)
+
+## Allowed French
+
+- Game **content** columns (`*_fr`, `question_fr`, payload locale `fr`) and catalog blurbs for players
+- Bilingual user docs (`README.md`, `CONTRIBUTING.md`) outside code
+
+## Examples
+
+```python
+# Bad
+print("Choisis ta filiale")
+"""Évite les erreurs Unicode."""
+
+# Good
+print("Choose your subsidiary")
+"""Avoid UnicodeEncodeError on Windows consoles (cp1252)."""
+```
+
+When editing code, translate any remaining French developer or UI strings to English.

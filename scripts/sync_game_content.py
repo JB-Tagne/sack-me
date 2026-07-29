@@ -80,8 +80,9 @@ def render_sql_entities(entities: list[dict]) -> str:
             )
         )
     body = ",\n".join(rows)
+    # Catalog YAML only (escaped) — offline seed generation, not runtime user input.
     return (
-        "INSERT INTO entities (id, name, domain_fr, domain_en, blurb_fr, blurb_en) VALUES\n"
+        "INSERT INTO entities (id, name, domain_fr, domain_en, blurb_fr, blurb_en) VALUES\n"  # nosec B608
         f"{body}\n"
         "ON CONFLICT (id) DO NOTHING;"
     )
@@ -217,8 +218,9 @@ def write_all(entities: list[dict]) -> list[Path]:
     mig = ROOT / "sql" / "migrations" / "999_sync_entities.sql"
     rows = []
     for e in entities:
+        # Catalog YAML only (escaped) — offline migration generation, not runtime user input.
         rows.append(
-            "INSERT INTO entities (id, name, domain_fr, domain_en, blurb_fr, blurb_en) VALUES\n"
+            "INSERT INTO entities (id, name, domain_fr, domain_en, blurb_fr, blurb_en) VALUES\n"  # nosec B608
             "  ('{id}', '{name}', '{df}', '{de}', '{bf}', '{be}')\n"
             "ON CONFLICT (id) DO UPDATE SET\n"
             "  name = EXCLUDED.name,\n"

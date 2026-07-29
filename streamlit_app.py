@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 
 from demo_content import (
@@ -37,16 +38,47 @@ load_dotenv()
 
 ROOT = Path(__file__).resolve().parent
 REACT_VERSION_FILE = ROOT / "streamlit_static" / "VERSION"
+REACT_REPO = "JB-Tagne/sack-me"
 
 
-def react_adventure_url() -> str:
-    """Full React SPA — hosted on raw.githack (text/html). jsDelivr serves HTML as text/plain."""
-    ref = "main"
+def pinned_react_ref() -> str:
+    """Commit SHA (or main) for the React build under streamlit_static/."""
     if REACT_VERSION_FILE.is_file():
         pinned = REACT_VERSION_FILE.read_text(encoding="utf-8").strip()
         if pinned:
-            ref = pinned
-    return f"https://raw.githack.com/JB-Tagne/sack-me/{ref}/streamlit_static/index.html"
+            return pinned
+    return "main"
+
+
+def react_cdn_asset(path: str, ref: str | None = None) -> str:
+    """jsDelivr serves .js/.css correctly; never load index.html from jsDelivr (text/plain)."""
+    sha = ref or pinned_react_ref()
+    return f"https://cdn.jsdelivr.net/gh/{REACT_REPO}@{sha}/streamlit_static/{path.lstrip('/')}"
+
+
+def react_adventure_html() -> str:
+    """Minimal HTML shell — Streamlit serves it as text/html; assets come from the CDN."""
+    ref = pinned_react_ref()
+    css = react_cdn_asset("assets/style.css", ref)
+    js = react_cdn_asset("assets/index.js", ref)
+    return f"""<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" crossorigin href="{css}" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" crossorigin src="{js}"></script>
+  </body>
+</html>"""
 
 
 # Player-facing UI chrome (bilingual). Code/comments stay English.
@@ -86,6 +118,9 @@ UI: dict[str, dict[str, str]] = {
         "nav_back": "← Précédent",
         "nav_next": "Suivant →",
         "gov_track": "Gouvernance",
+        "react_play": "Aventure React complète (animations · meetings · outils)",
+        "react_back": "← Retour au menu",
+        "react_caption": "Aventure React (assets CDN — ne pas ouvrir index.html sur jsDelivr)",
     },
     "en": {
         "lang": "Language",
@@ -122,6 +157,9 @@ UI: dict[str, dict[str, str]] = {
         "nav_back": "← Back",
         "nav_next": "Next →",
         "gov_track": "Governance",
+        "react_play": "Full React adventure (animations · meetings · tools)",
+        "react_back": "← Back to menu",
+        "react_caption": "React adventure (CDN assets — do not open index.html on jsDelivr)",
     },
 }
 
@@ -484,6 +522,16 @@ def render_hud(locale: str) -> None:
     )
 
 
+def page_react_adventure(locale: str) -> None:
+    st.markdown('<p class="sm-brand">SACK ME!</p>', unsafe_allow_html=True)
+    st.caption(ui(locale, "react_caption"))
+    if st.button(ui(locale, "react_back")):
+        st.session_state.show_react = False
+        st.rerun()
+    components.html(react_adventure_html(), height=900, scrolling=True)
+    st.caption(f"build @{pinned_react_ref()[:7]}")
+
+
 def page_home() -> None:
     st.markdown('<p class="sm-brand">SACK ME!</p>', unsafe_allow_html=True)
     st.markdown(
@@ -509,15 +557,10 @@ def page_home() -> None:
     backend = get_backend()
     st.info(ui(locale, "pg_mode") if backend == "postgres" else ui(locale, "demo_mode"))
 
-    react_url = react_adventure_url()
-    st.link_button(
-        "Full React adventure (animations · meetings · tools)"
-        if locale == "en"
-        else "Aventure React complète (animations · meetings · outils)",
-        react_url,
-        use_container_width=True,
-    )
-    st.caption(react_url)
+    if st.button(ui(locale, "react_play"), use_container_width=True):
+        st.session_state.show_react = True
+        st.rerun()
+    st.caption(ui(locale, "react_caption"))
 
     c1, c2 = st.columns(2)
     with c1:
@@ -842,13 +885,21 @@ def page_done() -> None:
 
 
 def main() -> None:
+    show_react = bool(st.session_state.get("show_react"))
     st.set_page_config(
         page_title="Sack Me!",
         page_icon="S",
-        layout="centered",
+        layout="wide" if show_react else "centered",
         initial_sidebar_state="collapsed",
     )
     inject_css()
+
+    if show_react:
+        locale = st.session_state.get("home_locale", "fr")
+        if "player" in st.session_state:
+            locale = st.session_state.player.get("locale", locale)
+        page_react_adventure(locale)
+        return
 
     if "player" not in st.session_state:
         page_home()
@@ -873,6 +924,9 @@ def main() -> None:
         locale = st.session_state.player.get("locale", "fr")
         if st.button(ui(locale, "quit")):
             del st.session_state.player
+            st.rerun()
+        if st.button(ui(locale, "react_play")):
+            st.session_state.show_react = True
             st.rerun()
 
 

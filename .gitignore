@@ -37,3 +37,9 @@ node_modules/.tmp/
 *.egg-info/
 .coverage
 htmlcov/
+
+# Local push helpers (machine-specific paths / auth)
+scripts/push_only.sh
+scripts/push_ci.sh
+scripts/push_streamlit.sh
+_*.sh

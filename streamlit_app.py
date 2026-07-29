@@ -59,9 +59,13 @@ if not BUNDLE.is_file():
 else:
     html = prepare_html(BUNDLE.read_text(encoding="utf-8"))
     # Prefer st.iframe (Streamlit ≥1.50); fall back to components.v1.html.
+    # Fixed pixel height + scrolling — "content" auto-height often stays at ~0 for SPAs.
     iframe = getattr(st, "iframe", None)
     if callable(iframe):
-        iframe(html, height=1400)
+        try:
+            iframe(html, height=1400, scrolling=True)
+        except TypeError:
+            iframe(html, height=1400)
     else:
         import streamlit.components.v1 as components
 

@@ -182,7 +182,10 @@ jobs:
       - run: npm test
       - name: Export TS tables to SQL
         run: npm run export:sql
-      - run: npm run build
+      - name: Build React + Streamlit HTML bundle
+        run: npm run build:streamlit
+      - name: Assert Streamlit bundle exists
+        run: test -f streamlit_static/sackme.html && test -s streamlit_static/sackme.html
 
   gate:
     name: All checks passed

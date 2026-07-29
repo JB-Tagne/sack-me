@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node ./node_modules/vite/bin/vite.js",
     "build": "node ./node_modules/typescript/bin/tsc -b && node ./node_modules/vite/bin/vite.js build",
+    "build:streamlit": "node ./node_modules/typescript/bin/tsc -b && node ./node_modules/vite/bin/vite.js build --mode streamlit && node scripts/inlineDistForStreamlit.mjs",
     "preview": "node ./node_modules/vite/bin/vite.js preview",
     "export:sql": "node ./node_modules/tsx/dist/cli.mjs scripts/exportTsToSql.ts",
     "test": "node ./node_modules/vitest/vitest.mjs run",

@@ -66,12 +66,16 @@ python app.py
 
 ### Déployer le lien live (Streamlit Community Cloud)
 
-1. Pousse le dépôt sur GitHub
-2. Va sur [share.streamlit.io](https://share.streamlit.io) → **New app**
-3. Repo + branche `main` + fichier principal : `streamlit_app.py`
-4. (Optionnel) Secrets : `DATABASE_URL` vers une Postgres cloud
-5. URL publique typique : `https://sack-me.streamlit.app`  
-   Mets à jour `STREAMLIT_LIVE_URL` / secret si le sous-domaine diffère
+Le live Streamlit embarque **le même jeu React** (animations, meetings, HUD, etc.)
+via `streamlit_static/sackme.html` (build single-file).
+
+1. `npm run build:streamlit` (régénère le HTML embarqué)
+2. Commit + push `streamlit_static/sackme.html`
+3. [share.streamlit.io](https://share.streamlit.io) → app `streamlit_app.py` / branche `main`
+4. Passe l’app en **Public** (Settings → Sharing) pour le lien public
+5. URL typique : `https://sack-me.streamlit.app`
+
+Le CLI Python (`python app.py`) et Postgres restent disponibles pour le parcours terminal / DB.
 
 ### Contenu de jeu (SQL = source de vérité)
 
@@ -210,12 +214,16 @@ python app.py
 
 ### Deploy the live link (Streamlit Community Cloud)
 
-1. Push the repo to GitHub
-2. Open [share.streamlit.io](https://share.streamlit.io) → **New app**
-3. Repo + `main` branch + main file: `streamlit_app.py`
-4. (Optional) Secrets: `DATABASE_URL` to a cloud Postgres
-5. Public URL typically: `https://sack-me.streamlit.app`  
-   Update `STREAMLIT_LIVE_URL` / secret if the subdomain differs
+Streamlit hosts the **same React adventure** (animations, meetings, HUD, etc.)
+via `streamlit_static/sackme.html` (single-file build).
+
+1. `npm run build:streamlit` (regenerate the embedded HTML)
+2. Commit + push `streamlit_static/sackme.html`
+3. [share.streamlit.io](https://share.streamlit.io) → app `streamlit_app.py` / `main`
+4. Set the app to **Public** (Settings → Sharing) for the public URL
+5. Typical URL: `https://sack-me.streamlit.app`
+
+The Python CLI (`python app.py`) and Postgres remain for the terminal / DB path.
 
 ### Game content (auto-sync)
 

@@ -34,6 +34,89 @@ from game_logic import (
 
 load_dotenv()
 
+# Player-facing UI chrome (bilingual). Code/comments stay English.
+UI: dict[str, dict[str, str]] = {
+    "fr": {
+        "lang": "Langue",
+        "new_game": "Nouvelle partie",
+        "resume": "Reprendre (code session)",
+        "continue": "Continuer",
+        "session_missing": "Session introuvable (Postgres requis hors mode démo).",
+        "demo_mode": "Mode démo (contenu embarqué — pas de Postgres)",
+        "pg_mode": "Données : PostgreSQL",
+        "local_session": "Session locale (pas d'hôte Streamlit Cloud)",
+        "cloud_hint": "Hôte cloud : {host} — si le lien public échoue, passe l'app en Public (share.streamlit.io → ⋮ → Settings → Sharing)",
+        "subsidiary": "Filiale Mutualis",
+        "choose_subsidiary": "Choisis ta filiale",
+        "confirm_subsidiary": "Valider la filiale",
+        "project_type": "Type de projet",
+        "project": "Projet",
+        "confirm_project": "Valider le projet",
+        "role": "Rôle",
+        "your_role": "Ton poste",
+        "start": "Lancer l'Incrément",
+        "answer": "Réponse",
+        "submit": "Valider",
+        "submit_deliverable": "Envoyer le livrable",
+        "deliverable": "Livrable",
+        "deliverable_ph": "Colle ton SQL / Python / texte…",
+        "ok_pts": "Correct (+{pts} pts).",
+        "ko_risk": "Incorrect — le fireRisk monte.",
+        "ok_tech": "Livrable accepté.",
+        "ko_tech": "Livrable insuffisant.",
+        "done": "Incrément MVP terminé — tu as encore ton poste.",
+        "grade": "Grade : **{label}** · fireRisk {risk}%",
+        "play_again": "Rejouer",
+        "quit": "Quitter / menu",
+        "nav_back": "← Précédent",
+        "nav_next": "Suivant →",
+        "gov_track": "Gouvernance",
+    },
+    "en": {
+        "lang": "Language",
+        "new_game": "New game",
+        "resume": "Resume (session code)",
+        "continue": "Continue",
+        "session_missing": "Session not found (Postgres required to resume outside demo).",
+        "demo_mode": "Demo mode (embedded content — no Postgres)",
+        "pg_mode": "Data: PostgreSQL",
+        "local_session": "Local session (no Streamlit Cloud host detected)",
+        "cloud_hint": "Cloud host: {host} — if the public link fails, set the app to Public (share.streamlit.io → ⋮ → Settings → Sharing)",
+        "subsidiary": "Mutualis subsidiary",
+        "choose_subsidiary": "Choose your subsidiary",
+        "confirm_subsidiary": "Confirm subsidiary",
+        "project_type": "Project type",
+        "project": "Project",
+        "confirm_project": "Confirm project",
+        "role": "Role",
+        "your_role": "Your position",
+        "start": "Start the Increment",
+        "answer": "Answer",
+        "submit": "Submit",
+        "submit_deliverable": "Submit deliverable",
+        "deliverable": "Deliverable",
+        "deliverable_ph": "Paste your SQL / Python / text…",
+        "ok_pts": "Correct (+{pts} pts).",
+        "ko_risk": "Incorrect — fireRisk rising.",
+        "ok_tech": "Deliverable accepted.",
+        "ko_tech": "Insufficient deliverable.",
+        "done": "MVP Increment complete — you still have your job.",
+        "grade": "Grade : **{label}** · fireRisk {risk}%",
+        "play_again": "Play again",
+        "quit": "Quit / menu",
+        "nav_back": "← Back",
+        "nav_next": "Next →",
+        "gov_track": "Governance",
+    },
+}
+
+
+def ui(locale: str, key: str, **kwargs: Any) -> str:
+    pack = UI.get(locale) or UI["fr"]
+    text = pack.get(key) or UI["en"].get(key) or key
+    return text.format(**kwargs) if kwargs else text
+
+
 def live_url() -> str | None:
     """Public app URL for display — never invent a subdomain that 404s / is private."""
     for key in ("STREAMLIT_LIVE_URL",):
@@ -393,35 +476,105 @@ def page_home() -> None:
         unsafe_allow_html=True,
     )
     url = live_url()
+    # Prefer FR on first visit (game is FR-first).
+    if "home_locale" not in st.session_state:
+        st.session_state.home_locale = "fr"
+    locale = st.radio(
+        ui(st.session_state.home_locale, "lang"),
+        ["fr", "en"],
+        horizontal=True,
+        format_func=lambda x: "FR" if x == "fr" else "EN",
+        key="home_locale",
+    )
     if url:
         host = url.replace("https://", "").replace("http://", "")
-        st.caption(
-            f"Cloud host: {host} — if opening the public link fails, "
-            "set the app to Public in share.streamlit.io → ⋮ → Settings → Sharing"
-        )
+        st.caption(ui(locale, "cloud_hint", host=host))
     else:
-        st.caption("Local session (no Streamlit Cloud host detected)")
+        st.caption(ui(locale, "local_session"))
     backend = get_backend()
-    st.info(
-        "Data: PostgreSQL" if backend == "postgres" else "Demo mode (embedded content — no Postgres)"
-    )
+    st.info(ui(locale, "pg_mode") if backend == "postgres" else ui(locale, "demo_mode"))
 
-    locale = st.radio("Language", ["fr", "en"], horizontal=True, format_func=lambda x: "FR" if x == "fr" else "EN")
     c1, c2 = st.columns(2)
     with c1:
-        if st.button("New game", type="primary", use_container_width=True):
+        if st.button(ui(locale, "new_game"), type="primary", use_container_width=True):
             st.session_state.player = new_player(locale)
             persist_player()
             st.rerun()
     with c2:
-        key = st.text_input("Resume (session code)", placeholder="abc123def456")
-        if st.button("Continue", use_container_width=True) and key.strip():
+        key = st.text_input(ui(locale, "resume"), placeholder="abc123def456")
+        if st.button(ui(locale, "continue"), use_container_width=True) and key.strip():
             loaded = load_player_pg(key) if get_backend() == "postgres" else None
             if loaded:
                 st.session_state.player = loaded
                 st.rerun()
             else:
-                st.error("Session not found (Postgres required to resume outside demo).")
+                st.error(ui(locale, "session_missing"))
+
+
+def career_go_back(p: dict[str, Any]) -> None:
+    step = p.get("pick_step", "entity")
+    if step == "kind":
+        p["pick_step"] = "entity"
+    elif step == "role":
+        p["pick_step"] = "kind"
+    persist_player()
+    st.rerun()
+
+
+def playing_go_back(p: dict[str, Any]) -> None:
+    """Reverse one half-step (mirrors React goBack on play)."""
+    p["feedback"] = None
+    half = p.get("step_half", "pm")
+    if half == "tech":
+        p["step_half"] = "pm"
+    elif half == "gov":
+        p["step_half"] = "tech"
+    else:  # pm
+        if p["step_index"] > 0:
+            p["step_index"] -= 1
+            p["step_half"] = "gov"
+        elif p["level_id"] > 0:
+            p["level_id"] -= 1
+            steps = steps_for_level(p["level_id"])
+            p["step_index"] = max(0, len(steps) - 1)
+            p["step_half"] = "gov"
+        else:
+            p["phase"] = "career-pick"
+            p["pick_step"] = "role"
+    persist_player()
+    st.rerun()
+
+
+def playing_go_next(p: dict[str, Any]) -> None:
+    """Skip ahead without scoring (mirrors React goForward / nav.next)."""
+    p["feedback"] = None
+    half = p.get("step_half", "pm")
+    if half == "pm":
+        p["step_half"] = "tech"
+    elif half == "tech":
+        p["step_half"] = "gov"
+    else:
+        p["step_index"] += 1
+        p["step_half"] = "pm"
+        steps = steps_for_level(p["level_id"])
+        if p["step_index"] >= len(steps):
+            if p["level_id"] >= max_level_id():
+                p["phase"] = "done"
+            else:
+                p["level_id"] += 1
+                p["step_index"] = 0
+    persist_player()
+    st.rerun()
+
+
+def nav_footer(locale: str, *, can_back: bool, can_next: bool, on_back, on_next) -> None:
+    b1, b2 = st.columns(2)
+    with b1:
+        if st.button(ui(locale, "nav_back"), disabled=not can_back, use_container_width=True, key="nav_back"):
+            on_back()
+    with b2:
+        if st.button(ui(locale, "nav_next"), disabled=not can_next, use_container_width=True, key="nav_next"):
+            on_next()
 
 
 def page_career_pick() -> None:
@@ -431,38 +584,59 @@ def page_career_pick() -> None:
     step = p.get("pick_step", "entity")
 
     if step == "entity":
-        st.subheader("Mutualis subsidiary")
+        st.subheader(ui(locale, "subsidiary"))
         entities = list_entities()
         labels = [f"{e['name']} — {loc(e, 'domain', locale)}" for e in entities]
-        choice = st.radio("Choose your subsidiary", range(len(entities)), format_func=lambda i: labels[i])
+        choice = st.radio(
+            ui(locale, "choose_subsidiary"),
+            range(len(entities)),
+            format_func=lambda i: labels[i],
+        )
         st.caption(loc(entities[choice], "blurb", locale))
-        if st.button("Confirm subsidiary", type="primary"):
+
+        def _confirm_entity() -> None:
             p["entity_id"] = entities[choice]["id"]
             p["pick_step"] = "kind"
             persist_player()
             st.rerun()
+
+        if st.button(ui(locale, "confirm_subsidiary"), type="primary"):
+            _confirm_entity()
+        nav_footer(locale, can_back=False, can_next=True, on_back=lambda: None, on_next=_confirm_entity)
         return
 
     if step == "kind":
-        st.subheader("Project type")
+        st.subheader(ui(locale, "project_type"))
         kinds = list_kinds()
         labels = [f"{loc(k, 'label', locale)} — {loc(k, 'hint', locale)}" for k in kinds]
-        choice = st.radio("Project", range(len(kinds)), format_func=lambda i: labels[i])
-        if st.button("Confirm project", type="primary"):
+        choice = st.radio(ui(locale, "project"), range(len(kinds)), format_func=lambda i: labels[i])
+
+        def _confirm_kind() -> None:
             p["project_kind"] = kinds[choice]["id"]
             p["pick_step"] = "role"
             persist_player()
             st.rerun()
+
+        if st.button(ui(locale, "confirm_project"), type="primary"):
+            _confirm_kind()
+        nav_footer(
+            locale,
+            can_back=True,
+            can_next=True,
+            on_back=lambda: career_go_back(p),
+            on_next=_confirm_kind,
+        )
         return
 
-    st.subheader("Role")
+    st.subheader(ui(locale, "role"))
     roles = list_roles(p["project_kind"] or "data-ai")
     labels = [
-        f"{loc(r, 'label', locale)} [{('PM' if r['track'] == 'pm' else 'Governance')}]"
+        f"{loc(r, 'label', locale)} [{('PM' if r['track'] == 'pm' else ui(locale, 'gov_track'))}]"
         for r in roles
     ]
-    choice = st.radio("Your position", range(len(roles)), format_func=lambda i: labels[i])
-    if st.button("Start the Increment", type="primary"):
+    choice = st.radio(ui(locale, "your_role"), range(len(roles)), format_func=lambda i: labels[i])
+
+    def _start() -> None:
         p["role_id"] = roles[choice]["id"]
         p["phase"] = "playing"
         p["level_id"] = 0
@@ -471,6 +645,16 @@ def page_career_pick() -> None:
         p["feedback"] = None
         persist_player()
         st.rerun()
+
+    if st.button(ui(locale, "start"), type="primary"):
+        _start()
+    nav_footer(
+        locale,
+        can_back=True,
+        can_next=True,
+        on_back=lambda: career_go_back(p),
+        on_next=_start,
+    )
 
 
 def page_playing() -> None:
@@ -508,10 +692,17 @@ def page_playing() -> None:
             st.error(fb["msg"])
             if fb.get("correction"):
                 st.caption(fb["correction"])
-        if st.button("Continue"):
+        if st.button(ui(locale, "continue")):
             p["feedback"] = None
             persist_player()
             st.rerun()
+        nav_footer(
+            locale,
+            can_back=True,
+            can_next=True,
+            on_back=lambda: playing_go_back(p),
+            on_next=lambda: playing_go_next(p),
+        )
         return
 
     half = p["step_half"]
@@ -526,8 +717,13 @@ def page_playing() -> None:
             return
         st.markdown(f"**[{half.upper()}]** {loc(q, 'question', locale)}")
         opts = [loc(q, "option_a", locale), loc(q, "option_b", locale), loc(q, "option_c", locale)]
-        ans = st.radio("Answer", range(3), format_func=lambda i: opts[i], key=f"q-{step['id']}-{half}")
-        if st.button("Submit", type="primary"):
+        ans = st.radio(
+            ui(locale, "answer"),
+            range(3),
+            format_func=lambda i: opts[i],
+            key=f"q-{step['id']}-{half}",
+        )
+        if st.button(ui(locale, "submit"), type="primary"):
             o = player_as_obj()
             passed = ans == int(q["correct_index"])
             apply_outcome(o, passed, half)
@@ -535,7 +731,7 @@ def page_playing() -> None:
             pts = PASS_POINTS[half]
             p["feedback"] = {
                 "ok": passed,
-                "msg": f"Correct (+{pts} pts)." if passed else "Incorrect — fireRisk rising.",
+                "msg": ui(locale, "ok_pts", pts=pts) if passed else ui(locale, "ko_risk"),
                 "correction": None if passed else loc(q, "correction", locale),
             }
             if half == "pm":
@@ -547,13 +743,24 @@ def page_playing() -> None:
                 p["phase"] = "fired"
             persist_player()
             st.rerun()
+        nav_footer(
+            locale,
+            can_back=True,
+            can_next=True,
+            on_back=lambda: playing_go_back(p),
+            on_next=lambda: playing_go_next(p),
+        )
         return
 
     # tech
     st.markdown(f"**[TECH · {step['expect_type'].upper()}]**")
     st.write(loc(step, "do", locale))
-    text = st.text_area("Deliverable", height=160, placeholder="Paste your SQL / Python / text…")
-    if st.button("Submit deliverable", type="primary"):
+    text = st.text_area(
+        ui(locale, "deliverable"),
+        height=160,
+        placeholder=ui(locale, "deliverable_ph"),
+    )
+    if st.button(ui(locale, "submit_deliverable"), type="primary"):
         o = player_as_obj()
         kws = list(step.get("keywords") or [])
         passed = evaluate_script(step["expect_type"], text, kws)
@@ -561,7 +768,7 @@ def page_playing() -> None:
         sync_from_obj(o)
         p["feedback"] = {
             "ok": passed,
-            "msg": "Deliverable accepted." if passed else "Insufficient deliverable.",
+            "msg": ui(locale, "ok_tech") if passed else ui(locale, "ko_tech"),
             "correction": None if passed else loc(step, "correction", locale),
         }
         p["step_half"] = "gov"
@@ -569,6 +776,13 @@ def page_playing() -> None:
             p["phase"] = "fired"
         persist_player()
         st.rerun()
+    nav_footer(
+        locale,
+        can_back=True,
+        can_next=True,
+        on_back=lambda: playing_go_back(p),
+        on_next=lambda: playing_go_next(p),
+    )
 
 
 def page_fired() -> None:
@@ -583,7 +797,7 @@ def page_fired() -> None:
     st.error(loc(m, "title", locale))
     st.write(loc(m, "opening", locale))
     st.write(loc(m, "closing", locale))
-    if st.button("New game"):
+    if st.button(ui(locale, "new_game")):
         st.session_state.player = new_player(locale)
         persist_player()
         st.rerun()
@@ -594,9 +808,9 @@ def page_done() -> None:
     locale = p["locale"]
     render_hud(locale)
     title = title_for_score(p["career_score"])
-    st.success("MVP Increment complete — you still have your job.")
-    st.write(f"Grade : **{loc(title, 'label', locale)}** · fireRisk {p['fire_risk']}%")
-    if st.button("Play again"):
+    st.success(ui(locale, "done"))
+    st.write(ui(locale, "grade", label=loc(title, "label", locale), risk=p["fire_risk"]))
+    if st.button(ui(locale, "play_again")):
         st.session_state.player = new_player(locale)
         persist_player()
         st.rerun()
@@ -631,7 +845,8 @@ def main() -> None:
         st.markdown("**Sack Me!**")
         url = live_url()
         st.caption(url or "local")
-        if st.button("Quit / menu"):
+        locale = st.session_state.player.get("locale", "fr")
+        if st.button(ui(locale, "quit")):
             del st.session_state.player
             st.rerun()
 

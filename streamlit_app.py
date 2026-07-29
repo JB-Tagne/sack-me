@@ -1,9 +1,8 @@
 """
 Sack Me! — Streamlit entry.
 
-Embeds the full React adventure via CDN (jsDelivr) so the game runs in a real
-https origin (ES modules + localStorage). Inlined srcdoc HTML was truncated /
-broken inside Streamlit's iframe.
+Loads the React adventure from jsDelivr with absolute asset URLs inside a small
+srcdoc shell (relative ./assets paths break; huge inlined JS was truncated).
 """
 
 from __future__ import annotations
@@ -11,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "streamlit_static"
@@ -28,9 +28,30 @@ def bundle_ref() -> str:
     return "main"
 
 
-def game_url(ref: str) -> str:
-    # jsDelivr serves repo files with correct MIME types for JS modules.
-    return f"https://cdn.jsdelivr.net/gh/{REPO}@{ref}/{STATIC_DIR}/index.html"
+def cdn_base(ref: str) -> str:
+    return f"https://cdn.jsdelivr.net/gh/{REPO}@{ref}/{STATIC_DIR}"
+
+
+def shell_html(ref: str) -> str:
+    base = cdn_base(ref)
+    # Absolute CDN URLs — required so the module loads inside Streamlit's iframe.
+    return f"""<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sack Me!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{base}/assets/style.css" />
+</head>
+<body style="margin:0;min-height:100vh;background:#0f1419;color:#e8eef4">
+  <div id="root"></div>
+  <script type="module" src="{base}/assets/index.js"></script>
+</body>
+</html>
+"""
 
 
 st.set_page_config(
@@ -49,7 +70,7 @@ st.markdown(
       #MainMenu,
       footer { visibility: hidden; height: 0; }
       .block-container {
-        padding: 0.5rem 0.75rem !important;
+        padding: 0.35rem 0.5rem !important;
         max-width: 100% !important;
       }
     </style>
@@ -58,28 +79,18 @@ st.markdown(
 )
 
 ref = bundle_ref()
-url = game_url(ref)
+base = cdn_base(ref)
+play_url = f"{base}/index.html"
 
-if not (STATIC / "index.html").is_file():
+if not (STATIC / "assets" / "index.js").is_file():
     st.error(
-        "Missing streamlit_static/index.html. "
-        "Run `npm run build:streamlit` and commit streamlit_static/."
+        "Missing streamlit_static/assets. Run `npm run build:streamlit` and commit."
     )
-    st.code("npm run build:streamlit", language="bash")
 else:
     st.markdown(
-        f'<p style="margin:0 0 0.5rem;font:600 0.9rem/1.3 system-ui,sans-serif">'
-        f'<a href="{url}" target="_blank" rel="noopener">Open Sack Me! in a new tab</a>'
-        f' <span style="opacity:.65">· bundle {ref[:7]}</span></p>',
+        f'<p style="margin:0 0 0.4rem;font:600 0.85rem/1.3 system-ui,sans-serif">'
+        f'<a href="{play_url}" target="_blank" rel="noopener">Open Sack Me! full screen</a>'
+        f' <span style="opacity:.6">· {ref[:7]}</span></p>',
         unsafe_allow_html=True,
     )
-    iframe = getattr(st, "iframe", None)
-    if callable(iframe):
-        try:
-            iframe(url, height=1400, scrolling=True)
-        except TypeError:
-            iframe(url, height=1400)
-    else:
-        import streamlit.components.v1 as components
-
-        components.iframe(url, height=1400, scrolling=True)
+    components.html(shell_html(ref), height=1400, scrolling=True)

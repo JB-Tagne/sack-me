@@ -67,13 +67,16 @@ python app.py
 ### Déployer le lien live (Streamlit Community Cloud)
 
 Le live Streamlit embarque **le même jeu React** (animations, meetings, HUD, etc.)
-via `streamlit_static/sackme.html` (build single-file).
+via `streamlit_static/sackme.html` (shell HTML) + assets CDN (jsDelivr).
 
-1. `npm run build:streamlit` (régénère le HTML embarqué)
-2. Commit + push `streamlit_static/sackme.html`
+1. `npm run build:streamlit` (régénère `sackme.html` + `assets/`)
+2. Commit + push `streamlit_static/` (puis pin `VERSION` sur le SHA qui contient les assets)
 3. [share.streamlit.io](https://share.streamlit.io) → app `streamlit_app.py` / branche `main`
 4. Passe l’app en **Public** (Settings → Sharing) pour le lien public
 5. URL typique : `https://sack-me.streamlit.app`
+
+Ne pas ouvrir `index.html` sur jsDelivr (MIME `text/plain`). Streamlit injecte le HTML ;
+seuls `.js` / `.css` passent par le CDN.
 
 Le CLI Python (`python app.py`) et Postgres restent disponibles pour le parcours terminal / DB.
 
@@ -215,13 +218,16 @@ python app.py
 ### Deploy the live link (Streamlit Community Cloud)
 
 Streamlit hosts the **same React adventure** (animations, meetings, HUD, etc.)
-via `streamlit_static/sackme.html` (single-file build).
+via `streamlit_static/sackme.html` (HTML shell) + CDN assets (jsDelivr).
 
-1. `npm run build:streamlit` (regenerate the embedded HTML)
-2. Commit + push `streamlit_static/sackme.html`
+1. `npm run build:streamlit` (regenerate `sackme.html` + `assets/`)
+2. Commit + push `streamlit_static/` (then pin `VERSION` to the SHA that contains the assets)
 3. [share.streamlit.io](https://share.streamlit.io) → app `streamlit_app.py` / `main`
 4. Set the app to **Public** (Settings → Sharing) for the public URL
 5. Typical URL: `https://sack-me.streamlit.app`
+
+Do not open `index.html` on jsDelivr (MIME `text/plain`). Streamlit injects the HTML;
+only `.js` / `.css` come from the CDN.
 
 The Python CLI (`python app.py`) and Postgres remain for the terminal / DB path.
 

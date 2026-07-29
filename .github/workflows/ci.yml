@@ -185,7 +185,7 @@ jobs:
       - name: Build React + Streamlit static site
         run: npm run build:streamlit
       - name: Assert Streamlit static exists
-        run: test -f streamlit_static/index.html && test -f streamlit_static/VERSION
+        run: test -f streamlit_static/index.html && test -f streamlit_static/sackme.html && test -f streamlit_static/VERSION
 
   gate:
     name: All checks passed

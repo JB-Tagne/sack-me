@@ -1,5 +1,9 @@
 # Dependencies
 node_modules/
+.venv/
+.venv-wsl/
+__pycache__/
+*.pyc
 
 # Build
 dist/
@@ -19,3 +23,14 @@ node_modules/.tmp/
 .env
 .env.*
 !.env.example
+
+# Streamlit secrets (ne jamais committer)
+.streamlit/secrets.toml
+
+# Python tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.coverage
+htmlcov/

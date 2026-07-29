@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "Sack Me! — adventure game focused on project management and data governance",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "node ./node_modules/vite/bin/vite.js",

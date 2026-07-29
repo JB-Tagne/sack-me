@@ -34,11 +34,25 @@ from game_logic import (
 
 load_dotenv()
 
-# Public Streamlit Community Cloud URL (update after deploy)
-LIVE_URL = os.getenv(
-    "STREAMLIT_LIVE_URL",
-    "https://sack-me.streamlit.app",
-)
+def live_url() -> str | None:
+    """Public app URL for display — never invent a subdomain that 404s / is private."""
+    for key in ("STREAMLIT_LIVE_URL",):
+        val = os.getenv(key, "").strip()
+        if val:
+            return val.rstrip("/")
+    try:
+        val = str(st.secrets.get("STREAMLIT_LIVE_URL", "") or "").strip()  # type: ignore[union-attr]
+        if val:
+            return val.rstrip("/")
+    except Exception:
+        pass
+    try:
+        host = (st.context.headers.get("Host") or st.context.headers.get("host") or "").split(",")[0].strip()
+        if host and ("streamlit.app" in host or "streamlitapp.com" in host):
+            return f"https://{host}"
+    except Exception:
+        pass
+    return None
 
 
 def try_pg() -> Any | None:
@@ -378,7 +392,15 @@ def page_home() -> None:
         '<p class="sm-sub">Career PM / Governance · Mutualis Group</p>',
         unsafe_allow_html=True,
     )
-    st.caption(f"Live · {LIVE_URL}")
+    url = live_url()
+    if url:
+        host = url.replace("https://", "").replace("http://", "")
+        st.caption(
+            f"Cloud host: {host} — if opening the public link fails, "
+            "set the app to Public in share.streamlit.io → ⋮ → Settings → Sharing"
+        )
+    else:
+        st.caption("Local session (no Streamlit Cloud host detected)")
     backend = get_backend()
     st.info(
         "Data: PostgreSQL" if backend == "postgres" else "Demo mode (embedded content — no Postgres)"
@@ -607,7 +629,8 @@ def main() -> None:
 
     with st.sidebar:
         st.markdown("**Sack Me!**")
-        st.caption(LIVE_URL)
+        url = live_url()
+        st.caption(url or "local")
         if st.button("Quit / menu"):
             del st.session_state.player
             st.rerun()

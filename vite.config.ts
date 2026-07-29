@@ -2,7 +2,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Shared Vite config. Streamlit embed uses IIFE (ES modules fail inside srcdoc iframes).
+// Streamlit mode writes a static site to streamlit_static/ (loaded via CDN iframe).
 export default defineConfig(({ mode }) => {
   const forStreamlit = mode === 'streamlit'
   return {
@@ -13,14 +13,16 @@ export default defineConfig(({ mode }) => {
     },
     build: forStreamlit
       ? {
+          outDir: 'streamlit_static',
+          emptyOutDir: true,
           cssCodeSplit: false,
           modulePreload: false,
           rollupOptions: {
             output: {
-              format: 'iife',
-              name: 'SackMeApp',
+              // Single ESM chunk — loaded from https CDN (works in Streamlit iframes).
               inlineDynamicImports: true,
               entryFileNames: 'assets/[name].js',
+              chunkFileNames: 'assets/[name].js',
               assetFileNames: 'assets/[name][extname]',
             },
           },

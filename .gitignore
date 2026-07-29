@@ -8,7 +8,7 @@ __pycache__/
 # Build
 dist/
 *.local
-# Keep streamlit_static/sackme.html committed for Streamlit Cloud
+# streamlit_static/ is committed (CDN source for Streamlit Cloud)
 !streamlit_static/
 !streamlit_static/**
 

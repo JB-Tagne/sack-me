@@ -1,9 +1,9 @@
 """
 Sack Me! — Streamlit entry.
 
-Hosts the full React adventure (landing, career pick, briefing, play, meetings,
-fire alerts, confetti, tool sidebar) so Cloud matches the Vite UI exactly.
-Build with: npm run build:streamlit  →  streamlit_static/sackme.html
+Embeds the full React adventure via CDN (jsDelivr) so the game runs in a real
+https origin (ES modules + localStorage). Inlined srcdoc HTML was truncated /
+broken inside Streamlit's iframe.
 """
 
 from __future__ import annotations
@@ -13,10 +13,25 @@ from pathlib import Path
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parent
-BUNDLE = ROOT / "streamlit_static" / "sackme.html"
+STATIC = ROOT / "streamlit_static"
+VERSION_FILE = STATIC / "VERSION"
 
-# CSV/JSON datasets are not inside the iframe srcdoc — serve from GitHub raw.
-DATA_GAME_CDN = "https://raw.githubusercontent.com/JB-Tagne/sack-me/main/public/data-game/"
+REPO = "JB-Tagne/sack-me"
+STATIC_DIR = "streamlit_static"
+
+
+def bundle_ref() -> str:
+    if VERSION_FILE.is_file():
+        ref = VERSION_FILE.read_text(encoding="utf-8").strip()
+        if ref:
+            return ref
+    return "main"
+
+
+def game_url(ref: str) -> str:
+    # jsDelivr serves repo files with correct MIME types for JS modules.
+    return f"https://cdn.jsdelivr.net/gh/{REPO}@{ref}/{STATIC_DIR}/index.html"
+
 
 st.set_page_config(
     page_title="Sack Me!",
@@ -34,39 +49,37 @@ st.markdown(
       #MainMenu,
       footer { visibility: hidden; height: 0; }
       .block-container {
-        padding: 0 !important;
+        padding: 0.5rem 0.75rem !important;
         max-width: 100% !important;
-        margin: 0 !important;
       }
-      [data-testid="stAppViewContainer"] > .main { padding: 0 !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+ref = bundle_ref()
+url = game_url(ref)
 
-def prepare_html(raw: str) -> str:
-    """Rewrite /data-game/ asset paths so downloads work inside the iframe."""
-    return raw.replace("/data-game/", DATA_GAME_CDN)
-
-
-if not BUNDLE.is_file():
+if not (STATIC / "index.html").is_file():
     st.error(
-        "Missing streamlit_static/sackme.html. "
-        "Run `npm run build:streamlit` then commit the file for Streamlit Cloud."
+        "Missing streamlit_static/index.html. "
+        "Run `npm run build:streamlit` and commit streamlit_static/."
     )
     st.code("npm run build:streamlit", language="bash")
 else:
-    html = prepare_html(BUNDLE.read_text(encoding="utf-8"))
-    # Prefer st.iframe (Streamlit ≥1.50); fall back to components.v1.html.
-    # Fixed pixel height + scrolling — "content" auto-height often stays at ~0 for SPAs.
+    st.markdown(
+        f'<p style="margin:0 0 0.5rem;font:600 0.9rem/1.3 system-ui,sans-serif">'
+        f'<a href="{url}" target="_blank" rel="noopener">Open Sack Me! in a new tab</a>'
+        f' <span style="opacity:.65">· bundle {ref[:7]}</span></p>',
+        unsafe_allow_html=True,
+    )
     iframe = getattr(st, "iframe", None)
     if callable(iframe):
         try:
-            iframe(html, height=1400, scrolling=True)
+            iframe(url, height=1400, scrolling=True)
         except TypeError:
-            iframe(html, height=1400)
+            iframe(url, height=1400)
     else:
         import streamlit.components.v1 as components
 
-        components.html(html, height=1400, scrolling=True)
+        components.iframe(url, height=1400, scrolling=True)

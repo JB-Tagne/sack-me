@@ -1,0 +1,16 @@
+order_id,client_id,date_commande,magasin,montant_ht,statut,updated_at
+O1001,C001,2026-07-20,Lyon Centre,49.90,livree,2026-07-20 18:02:00
+O1002,C002,2026-07-20,Paris Nation,120.00,livree,2026-07-20 19:11:00
+O1003,C001,2026-07-21,Lyon Centre,15.50,annulee,2026-07-21 09:40:00
+O1004,C003,2026-07-21,Lille Flandres,230.00,livree,2026-07-21 14:22:00
+O1005,C004,2026-07-21,Lyon Part-Dieu,89.00,livree,2026-07-21 16:05:00
+O1006,C002,2026-07-22,Paris Nation,120.00,livree,2026-07-22 10:18:00
+O1007,C005,2026-07-22,Nantes Atlantis,310.40,livree,2026-07-22 11:02:00
+O1008,C006,2026-07-22,Paris Opera,42.00,en_cours,2026-07-22 12:45:00
+O1009,C007,2026-07-22,Marseille Prado,175.20,livree,2026-07-22 13:10:00
+O1010,C008,2026-07-22,Lyon Centre,67.80,livree,2026-07-22 15:33:00
+O1011,C003,2026-07-22,Lille Flandres,54.00,livree,2026-07-22 16:01:00
+O1012,C004,2026-07-22,Lyon Part-Dieu,89.00,livree,2026-07-22 17:20:00
+O1013,C001,2026-07-22,Lyon Centre,22.00,livree,2026-07-22 18:05:00
+O1014,C002,2026-07-22,Paris Nation,,,livree,2026-07-22 18:40:00
+O1015,C999,2026-07-22,Paris Nation,99.00,livree,2026-07-22 19:00:00

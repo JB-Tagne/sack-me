@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+*.local
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# TypeScript / Vite
+*.tsbuildinfo
+node_modules/.tmp/
+
+# Env
+.env
+.env.*
+!.env.example

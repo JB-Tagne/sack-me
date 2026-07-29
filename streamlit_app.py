@@ -49,7 +49,7 @@ st.markdown(
 )
 
 st.markdown(
-    f"""
+    """
     <div class="sm-wrap">
       <h1>SACK ME!</h1>
       <p>Career PM / Governance · Mutualis Group</p>

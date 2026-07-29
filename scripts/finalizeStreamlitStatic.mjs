@@ -1,5 +1,6 @@
 /**
- * Finalize Streamlit static site: absolute CDN asset URLs in index.html.
+ * Finalize Streamlit static site (relative asset paths for raw.githack.com).
+ * jsDelivr serves HTML as text/plain — do not host the SPA entry there.
  */
 import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
@@ -10,8 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outDir = resolve(root, 'streamlit_static')
 const indexPath = resolve(outDir, 'index.html')
 const jsPath = resolve(outDir, 'assets/index.js')
-const REPO = 'JB-Tagne/sack-me'
-const DATA_CDN = `https://raw.githubusercontent.com/${REPO}/main/public/data-game/`
+const DATA_CDN = 'https://raw.githubusercontent.com/JB-Tagne/sack-me/main/public/data-game/'
 
 if (!existsSync(indexPath)) {
   console.error('streamlit_static/index.html missing')
@@ -19,6 +19,12 @@ if (!existsSync(indexPath)) {
 }
 
 rmSync(resolve(outDir, 'data-game'), { recursive: true, force: true })
+
+if (existsSync(jsPath)) {
+  let js = readFileSync(jsPath, 'utf8')
+  js = js.replaceAll('/data-game/', DATA_CDN)
+  writeFileSync(jsPath, js, 'utf8')
+}
 
 function gitSha() {
   for (const cmd of ['git rev-parse HEAD', 'wsl git rev-parse HEAD']) {
@@ -32,25 +38,5 @@ function gitSha() {
   return 'main'
 }
 
-const sha = gitSha()
-// Use @main for HTML asset tags so links keep working; query bust with sha.
-const assetBase = `https://cdn.jsdelivr.net/gh/${REPO}@main/streamlit_static/assets`
-const bust = `?v=${sha.slice(0, 7)}`
-
-if (existsSync(jsPath)) {
-  let js = readFileSync(jsPath, 'utf8')
-  js = js.replaceAll('/data-game/', DATA_CDN)
-  writeFileSync(jsPath, js, 'utf8')
-}
-
-let html = readFileSync(indexPath, 'utf8')
-html = html
-  .replace(/src="\.\/assets\/([^"]+)"/g, `src="${assetBase}/$1${bust}"`)
-  .replace(/href="\.\/assets\/([^"]+)"/g, `href="${assetBase}/$1${bust}"`)
-  .replace(
-    /href="\.\/icons\/([^"]+)"/g,
-    `href="https://cdn.jsdelivr.net/gh/${REPO}@main/streamlit_static/icons/$1"`,
-  )
-writeFileSync(indexPath, html, 'utf8')
-writeFileSync(resolve(outDir, 'VERSION'), `${sha}\n`, 'utf8')
-console.log('Streamlit static ready', { sha, sample: html.match(/src="https:[^"]+"/)?.[0] })
+writeFileSync(resolve(outDir, 'VERSION'), `${gitSha()}\n`, 'utf8')
+console.log('Streamlit static ready (relative assets for githack)')

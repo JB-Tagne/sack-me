@@ -12,15 +12,6 @@ from typing import Any
 import streamlit as st
 from dotenv import load_dotenv
 
-from app import (
-    DATA_AI_ROLE_IDS,
-    FIRE_THRESHOLD,
-    IT_ROLE_IDS,
-    PASS_POINTS,
-    apply_outcome,
-    evaluate_script,
-    loc,
-)
 from demo_content import (
     CAREER_TITLES,
     ENTITIES,
@@ -30,6 +21,15 @@ from demo_content import (
     QUESTIONS,
     ROLES,
     STEPS,
+)
+from game_logic import (
+    DATA_AI_ROLE_IDS,
+    FIRE_THRESHOLD,
+    IT_ROLE_IDS,
+    PASS_POINTS,
+    apply_outcome,
+    evaluate_script,
+    loc,
 )
 
 load_dotenv()

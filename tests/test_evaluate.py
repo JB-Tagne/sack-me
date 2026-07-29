@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app import clamp, evaluate_script, norm
+from game_logic import clamp, evaluate_script, loc, norm
 
 
 def test_norm_strips_accents_and_case() -> None:
@@ -32,6 +32,25 @@ def test_evaluate_python_ok() -> None:
     )
 
 
-def test_evaluate_text_needs_keywords() -> None:
-    assert evaluate_script("text", "arbitrage scope et risque", ["scope", "risque"]) is True
-    assert evaluate_script("text", "hello", ["scope", "risque", "delai"]) is False
+def test_evaluate_python_rejects_emptyish() -> None:
+    assert evaluate_script("python", "   ", None) is False
+    assert evaluate_script("python", "hello world", ["pandas"]) is False
+
+
+def test_evaluate_sql_rejects_without_baseline() -> None:
+    assert evaluate_script("sql", "delete from x", ["delete"]) is False
+
+
+def test_evaluate_text_short_keywords_ignored() -> None:
+    # keywords shorter than 2 usable chars are ignored → passes if text non-empty
+    assert evaluate_script("text", "ok", ["a", " "]) is True
+
+
+def test_evaluate_keyword_min_not_met() -> None:
+    assert evaluate_script("text", "seulement scope", ["scope", "risque", "delai"]) is False
+
+
+def test_loc_unknown_locale_uses_fr() -> None:
+    assert loc({"label_fr": "Junior"}, "label", "de") == "Junior"
+
+

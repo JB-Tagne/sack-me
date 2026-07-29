@@ -28,6 +28,7 @@ def conn():
     c.close()
 
 
+@pytest.mark.integration
 def test_entities_seeded(conn: psycopg.Connection) -> None:
     with conn.cursor() as cur:
         cur.execute("SELECT COUNT(*) FROM entities")
@@ -35,6 +36,7 @@ def test_entities_seeded(conn: psycopg.Connection) -> None:
     assert n >= 7
 
 
+@pytest.mark.integration
 def test_steps_have_questions(conn: psycopg.Connection) -> None:
     with conn.cursor() as cur:
         cur.execute(
@@ -51,6 +53,7 @@ def test_steps_have_questions(conn: psycopg.Connection) -> None:
     assert missing == []
 
 
+@pytest.mark.integration
 def test_schema_files_exist() -> None:
     assert (ROOT / "sql" / "schema.sql").is_file()
     assert (ROOT / "sql" / "seed.sql").is_file()

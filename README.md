@@ -91,6 +91,34 @@ python app.py
 
 ### Tests & qualité
 
+À **chaque push / PR**, GitHub Actions exécute :
+
+| Job | Contenu |
+|-----|---------|
+| Lint | Ruff |
+| Unit | Pytest + **couverture ligne à ligne** (`--cov-fail-under=90` sur `game_logic` / `demo_content`) |
+| Integration | Schema + seed PostgreSQL + `tests/test_db.py` |
+| Security | Bandit, pip-audit, npm audit, `tests/test_security.py` |
+| Performance | Budgets temps + pytest-benchmark |
+| Streamlit | Import smoke |
+| Node | `npm test` + `npm run build` |
+
+**Hooks locaux** (bloquent commit / push) :
+
+```bash
+pip install -r requirements-dev.txt
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+Batterie complète en local :
+
+```bash
+bash scripts/run_all_checks.sh
+# Windows PowerShell (via WSL ou Git Bash) :
+# wsl bash scripts/run_all_checks.sh
+```
+
 ```bash
 pytest
 ruff check .
@@ -186,9 +214,30 @@ python app.py
 
 ### Tests & quality
 
+On **every push / PR**, GitHub Actions runs:
+
+| Job | What |
+|-----|------|
+| Lint | Ruff |
+| Unit | Pytest + **line coverage** (`--cov-fail-under=90` on `game_logic` / `demo_content`) |
+| Integration | PostgreSQL schema + seed + `tests/test_db.py` |
+| Security | Bandit, pip-audit, npm audit, `tests/test_security.py` |
+| Performance | Time budgets + pytest-benchmark |
+| Streamlit | Import smoke |
+| Node | `npm test` + `npm run build` |
+
+**Local hooks** (block commit / push):
+
 ```bash
-pytest
-ruff check .
+pip install -r requirements-dev.txt
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+Full local suite:
+
+```bash
+bash scripts/run_all_checks.sh
 ```
 
 CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)

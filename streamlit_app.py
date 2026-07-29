@@ -1,8 +1,8 @@
 """
 Sack Me! — Streamlit entry.
 
-Loads the React adventure from jsDelivr with absolute asset URLs inside a small
-srcdoc shell (relative ./assets paths break; huge inlined JS was truncated).
+Streamlit iframes are unreliable for this SPA. Redirect to the CDN-hosted
+React build (absolute asset URLs) so the game always runs in a normal tab.
 """
 
 from __future__ import annotations
@@ -28,69 +28,47 @@ def bundle_ref() -> str:
     return "main"
 
 
-def cdn_base(ref: str) -> str:
-    return f"https://cdn.jsdelivr.net/gh/{REPO}@{ref}/{STATIC_DIR}"
+def play_url(ref: str) -> str:
+    return f"https://cdn.jsdelivr.net/gh/{REPO}@{ref}/{STATIC_DIR}/index.html"
 
 
-def shell_html(ref: str) -> str:
-    base = cdn_base(ref)
-    # Absolute CDN URLs — required so the module loads inside Streamlit's iframe.
-    return f"""<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sack Me!</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{base}/assets/style.css" />
-</head>
-<body style="margin:0;min-height:100vh;background:#0f1419;color:#e8eef4">
-  <div id="root"></div>
-  <script type="module" src="{base}/assets/index.js"></script>
-</body>
-</html>
-"""
+st.set_page_config(page_title="Sack Me!", page_icon="S", layout="centered")
 
-
-st.set_page_config(
-    page_title="Sack Me!",
-    page_icon="S",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+ref = bundle_ref()
+url = play_url(ref)
 
 st.markdown(
     """
     <style>
-      [data-testid="stHeader"],
-      [data-testid="stToolbar"],
-      [data-testid="stDecoration"],
-      #MainMenu,
-      footer { visibility: hidden; height: 0; }
-      .block-container {
-        padding: 0.35rem 0.5rem !important;
-        max-width: 100% !important;
-      }
+      .sm-wrap { max-width: 28rem; margin: 15vh auto 0; text-align: center; font-family: system-ui, sans-serif; }
+      .sm-wrap h1 { font-size: 2.4rem; letter-spacing: 0.04em; margin-bottom: 0.35rem; }
+      .sm-wrap p { opacity: 0.75; margin-bottom: 1.25rem; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-ref = bundle_ref()
-base = cdn_base(ref)
-play_url = f"{base}/index.html"
+st.markdown(
+    f"""
+    <div class="sm-wrap">
+      <h1>SACK ME!</h1>
+      <p>Career PM / Governance · Mutualis Group</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-if not (STATIC / "assets" / "index.js").is_file():
-    st.error(
-        "Missing streamlit_static/assets. Run `npm run build:streamlit` and commit."
-    )
-else:
-    st.markdown(
-        f'<p style="margin:0 0 0.4rem;font:600 0.85rem/1.3 system-ui,sans-serif">'
-        f'<a href="{play_url}" target="_blank" rel="noopener">Open Sack Me! full screen</a>'
-        f' <span style="opacity:.6">· {ref[:7]}</span></p>',
-        unsafe_allow_html=True,
-    )
-    components.html(shell_html(ref), height=1400, scrolling=True)
+st.link_button("Play Sack Me!", url, type="primary", use_container_width=True)
+st.caption(f"Bundle {ref[:7]} · opens the full React game")
+
+# Auto-redirect the top window (leave Streamlit chrome)
+components.html(
+    f"""
+    <script>
+      try {{ window.top.location.replace({url!r}); }}
+      catch (e) {{ window.location.replace({url!r}); }}
+    </script>
+    <p style="font:14px system-ui;padding:8px">Redirecting… <a href="{url}" target="_top">Click here</a></p>
+    """,
+    height=48,
+)

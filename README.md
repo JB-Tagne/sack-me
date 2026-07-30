@@ -5,6 +5,12 @@
 Serious game · simulation de carrière **gestion de projet** & **gouvernance data**  
 Career simulation serious game · **project management** & **data governance**
 
+### Live
+
+**[Jouer en ligne — GitHub Pages](https://jb-tagne.github.io/sack-me/)**
+
+Local : `npm run dev` → [http://localhost:5173](http://localhost:5173)
+
 ---
 
 ## Français
@@ -86,6 +92,22 @@ Voir [CONTRIBUTING.md](CONTRIBUTING.md).
 
 [MIT](LICENSE)
 
+### Déployer (GitHub Pages)
+
+Chaque push sur `main` déploie via [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+
+URL publique : **https://jb-tagne.github.io/sack-me/**
+
+Première fois : repo **Settings → Pages → Build and deployment → Source : GitHub Actions**.
+
+Test local du build Pages :
+
+```powershell
+$env:VITE_BASE="/sack-me/"; npm run build; npm run preview
+```
+
+Puis ouvre l’URL affichée par Vite (souvent `http://localhost:4173/sack-me/`).
+
 ---
 
 ## English
@@ -166,3 +188,19 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ### License
 
 [MIT](LICENSE)
+
+### Deploy (GitHub Pages)
+
+Every push to `main` deploys via [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+
+Public URL: **https://jb-tagne.github.io/sack-me/**
+
+First time: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+Local Pages build test:
+
+```powershell
+$env:VITE_BASE="/sack-me/"; npm run build; npm run preview
+```
+
+Then open the URL Vite prints (often `http://localhost:4173/sack-me/`).

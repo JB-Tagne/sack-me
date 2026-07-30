@@ -2,7 +2,8 @@
 
 import type { ProjectPhase, ToolId } from './tools'
 import { CODE_FOCUS_TOOLS, isCodeFocusTool, PHASE_LABELS, PHASE_LABELS_EN, STACK_TOOLS } from './tools'
-import { PRACTICE_EXERCISES, type PracticeExercise } from './exercises'
+import { PRACTICE_EXERCISES, resolvePracticeExercise, type PracticeExercise } from './exercises'
+import { curatedLevelEn, curatedStepEn } from './adventureCurated.en'
 import { GAME_DATASETS } from './gameDatasets'
 import {
   resolveGovernance,
@@ -84,37 +85,67 @@ export function expectMeta(
   }
 }
 
-/** Indice piège par défaut (niveaux infinis / fallback). */
-export function defaultTrapForTool(tool: ToolId | undefined): string {
+/** Default trap hint (endless levels / fallback). */
+export function defaultTrapForTool(
+  tool: ToolId | undefined,
+  locale: PmGameLocale = 'fr',
+): string {
+  const en = locale === 'en'
   switch (tool) {
     case 'confluence':
-      return 'Une décision sans conséquences documentées sera rediscutée à chaque comité — l’ADR doit trancher.'
+      return en
+        ? 'A decision without documented consequences will be reopened at every committee — the ADR must decide.'
+        : 'Une décision sans conséquences documentées sera rediscutée à chaque comité — l’ADR doit trancher.'
     case 'jira':
-      return 'Une story sans critère d’acceptation chiffré n’est pas testable : « ça marche » ne passe pas en revue.'
+      return en
+        ? 'A story without measurable acceptance criteria is not testable: “it works” will not pass review.'
+        : 'Une story sans critère d’acceptation chiffré n’est pas testable : « ça marche » ne passe pas en revue.'
     case 'sql':
-      return 'Avant de joindre ou compter, normalise les clés (casse, espaces, NULL) — sinon tu sous/surestimes les volumes.'
+      return en
+        ? 'Before joining or counting, normalize keys (case, spaces, NULL) — otherwise you under/overestimate volumes.'
+        : 'Avant de joindre ou compter, normalise les clés (casse, espaces, NULL) — sinon tu sous/surestimes les volumes.'
     case 'python':
-      return 'Un script non idempotent (append aveugle, chemins non datés) duplique les données au moindre rejeu.'
+      return en
+        ? 'A non-idempotent script (blind append, undated paths) duplicates data on every replay.'
+        : 'Un script non idempotent (append aveugle, chemins non datés) duplique les données au moindre rejeu.'
     case 'gcs':
-      return 'Sans préfixe daté (dt=YYYY-MM-DD), sensors Airflow et rejeu d’un jour deviennent impossibles.'
+      return en
+        ? 'Without a dated prefix (dt=YYYY-MM-DD), Airflow sensors and single-day replays become impossible.'
+        : 'Sans préfixe daté (dt=YYYY-MM-DD), sensors Airflow et rejeu d’un jour deviennent impossibles.'
     case 'cloudsql':
-      return 'Sans lookback sur updated_at, les mises à jour tardives (late arriving) disparaîtront du mart.'
+      return en
+        ? 'Without lookback on updated_at, late-arriving updates will vanish from the mart.'
+        : 'Sans lookback sur updated_at, les mises à jour tardives (late arriving) disparaîtront du mart.'
     case 'bigquery':
-      return 'Un filtre date wrappé (CAST/FORMAT) peut casser le partition pruning → full scan et facture explosive.'
+      return en
+        ? 'A wrapped date filter (CAST/FORMAT) can break partition pruning → full scan and an exploding bill.'
+        : 'Un filtre date wrappé (CAST/FORMAT) peut casser le partition pruning → full scan et facture explosive.'
     case 'dbt':
-      return 'Des tests unique/not_null sur la mauvaise couche (staging brut SCD) échouent ou laissent passer des KPI faux.'
+      return en
+        ? 'unique/not_null tests on the wrong layer (raw SCD staging) fail or let bad KPIs through.'
+        : 'Des tests unique/not_null sur la mauvaise couche (staging brut SCD) échouent ou laissent passer des KPI faux.'
     case 'spark':
     case 'databricks':
-      return 'Une clé « inconnue / 0 » peut concentrer le shuffle : le job timeout alors que le cluster semble idle.'
+      return en
+        ? 'An “unknown / 0” key can skew the shuffle: the job times out while the cluster looks idle.'
+        : 'Une clé « inconnue / 0 » peut concentrer le shuffle : le job timeout alors que le cluster semble idle.'
     case 'airflow':
-      return 'Le path du sensor doit coller exactement au fichier landing (dt={{ ds }} inclus) — un typo = DAG stuck.'
+      return en
+        ? 'The sensor path must match the landing file exactly (including dt={{ ds }}) — a typo = stuck DAG.'
+        : 'Le path du sensor doit coller exactement au fichier landing (dt={{ ds }} inclus) — un typo = DAG stuck.'
     case 'datagalaxy':
-      return 'Une définition KPI sans lien technique (table/colonne) reste orpheline : chacun recalcule « à sa façon ».'
+      return en
+        ? 'A KPI definition with no technical link (table/column) stays orphaned: everyone recalculates “their way”.'
+        : 'Une définition KPI sans lien technique (table/colonne) reste orpheline : chacun recalcule « à sa façon ».'
     case 'powerbi':
     case 'looker':
-      return 'Joindre deux faits au mauvais grain (jour vs créneau, avec/sans magasin) multiplie les lignes et fausse les totaux.'
+      return en
+        ? 'Joining two facts at the wrong grain (day vs slot, with/without store) multiplies rows and corrupts totals.'
+        : 'Joindre deux faits au mauvais grain (jour vs créneau, avec/sans magasin) multiplie les lignes et fausse les totaux.'
     default:
-      return 'Vérifie le grain, les clés de jointure et les valeurs NULL avant de valider ton livrable.'
+      return en
+        ? 'Check grain, join keys, and NULL values before validating your deliverable.'
+        : 'Vérifie le grain, les clés de jointure et les valeurs NULL avant de valider ton livrable.'
   }
 }
 
@@ -899,38 +930,67 @@ function exerciseToSteps(
   ex: PracticeExercise,
   intensity: number,
   levelPhase?: ProjectPhase,
+  locale: PmGameLocale = 'fr',
 ): AdventureStep[] {
-  const prefix = `e${intensity}-${ex.id}`
-  const expect = expectForTool(ex.tool)
-  const situation = `Situation Mutualis — ${ex.context}`
-  const practiceLead = `Manipulation pratique (${toolName(ex.tool)}) : ${ex.description}`
+  const localized = resolvePracticeExercise(ex, locale)
+  const en = locale === 'en'
+  const prefix = `e${intensity}-${localized.id}`
+  const expect = expectForTool(localized.tool)
+  const situation = en
+    ? `Mutualis situation — ${localized.context}`
+    : `Situation Mutualis — ${localized.context}`
+  const practiceLead = en
+    ? `Hands-on practice (${toolName(localized.tool)}): ${localized.description}`
+    : `Manipulation pratique (${toolName(localized.tool)}) : ${localized.description}`
+  const intensityHint =
+    intensity > 5
+      ? en
+        ? `\n\nLevel M${intensity}: be more precise, as in a code review.`
+        : `\n\nNiveau M${intensity} : sois plus précis, comme en revue de code.`
+      : ''
+  const trapBase = defaultTrapForTool(localized.tool, locale)
+  const trapExtra =
+    intensity > 6
+      ? en
+        ? ` Level M${intensity}: also document how you detect the error.`
+        : ` Niveau M${intensity} : documente aussi comment tu détectes l’erreur.`
+      : ''
   return [
     {
       id: `${prefix}-work`,
-      title: `${toolName(ex.tool)} — ${ex.title}`,
-      say: `${situation}\n\n${practiceLead}${
-        intensity > 5 ? `\n\nNiveau M${intensity} : sois plus précis, comme en revue de code.` : ''
-      }`,
-      do: `Manipule l’outil et produis le livrable demandé.\nÀ faire : ${ex.tasks.join(' · ')}`,
-      how: ex.steps.map((s) => `${s.title} — ${s.detail}`),
-      trap:
-        ex.trap ??
-        (intensity > 6
-          ? `${defaultTrapForTool(ex.tool)} Niveau M${intensity} : documente aussi comment tu détectes l’erreur.`
-          : defaultTrapForTool(ex.tool)),
+      title: `${toolName(localized.tool)} — ${localized.title}`,
+      say: `${situation}\n\n${practiceLead}${intensityHint}`,
+      do: en
+        ? `Use the tool and produce the requested deliverable.\nTo do: ${localized.tasks.join(' · ')}`
+        : `Manipule l’outil et produis le livrable demandé.\nÀ faire : ${localized.tasks.join(' · ')}`,
+      how: localized.steps.map((s) => `${s.title} — ${s.detail}`),
+      trap: localized.trap ?? `${trapBase}${trapExtra}`,
       expect,
-      dataset: datasetForTool(ex.tool),
+      dataset: datasetForTool(localized.tool),
       placeholder:
         expect === 'sql'
-          ? '-- Ta requête SQL…'
+          ? en
+            ? '-- Your SQL query…'
+            : '-- Ta requête SQL…'
           : expect === 'python'
-            ? '# Ton script Python…'
+            ? en
+              ? '# Your Python script…'
+              : '# Ton script Python…'
             : expect === 'screenshot'
-              ? 'Décris ce que montre ta capture…'
-              : 'Colle ton livrable…',
+              ? en
+                ? 'Describe what your screenshot shows…'
+                : 'Décris ce que montre ta capture…'
+              : en
+                ? 'Paste your deliverable…'
+                : 'Colle ton livrable…',
       validate:
         expect === 'screenshot'
-          ? { requireFile: true, minLength: 12, keywordMin: 1, keywords: ['mesure', 'filtre', 'sum', 'visual', 'dashboard', 'kpi'] }
+          ? {
+              requireFile: true,
+              minLength: 12,
+              keywordMin: 1,
+              keywords: ['mesure', 'filtre', 'sum', 'visual', 'dashboard', 'kpi', 'measure', 'filter'],
+            }
           : expect === 'sql'
             ? {
                 minLength: 28 + Math.min(20, intensity),
@@ -945,17 +1005,23 @@ function exerciseToSteps(
                 }
               : {
                   minLength: 40 + Math.min(30, intensity),
-                  keywords: ['kpi', 'owner', 'risque', 'sla', 'test', 'mart', 'landing', 'pipeline'],
+                  keywords: ['kpi', 'owner', 'risque', 'sla', 'test', 'mart', 'landing', 'pipeline', 'risk'],
                   keywordMin: 1,
                 },
-      feedbackPass: 'Manipulation validée — on avance.',
+      feedbackPass: en
+        ? 'Hands-on validated — moving on.'
+        : 'Manipulation validée — on avance.',
       feedbackFail:
         expect === 'screenshot'
-          ? 'Joins une capture d’écran et un court commentaire sur ce que tu as manipulé.'
-          : 'Enrichis le livrable : montre concrètement ce que tu as manipulé dans l’outil.',
-      correction: ex.modelSolution,
-      tool: ex.tool,
-      phase: levelPhase ?? phaseOfTool(ex.tool),
+          ? en
+            ? 'Attach a screenshot and a short comment on what you manipulated.'
+            : 'Joins une capture d’écran et un court commentaire sur ce que tu as manipulé.'
+          : en
+            ? 'Enrich the deliverable: show concretely what you manipulated in the tool.'
+            : 'Enrichis le livrable : montre concrètement ce que tu as manipulé dans l’outil.',
+      correction: localized.modelSolution,
+      tool: localized.tool,
+      phase: levelPhase ?? phaseOfTool(localized.tool),
       // Placeholders : enrichStep injecte les vrais packs PM + gouvernance
       projectMgmt: undefined,
       governance: undefined,
@@ -1126,7 +1192,7 @@ export function buildRoleScopedSteps(
 
   const intensity = levelId
   return picked
-    .flatMap((ex) => exerciseToSteps(ex, intensity, phase))
+    .flatMap((ex) => exerciseToSteps(ex, intensity, phase, locale))
     .map((s) => enrichStep(s, intensity, locale))
 }
 
@@ -1197,9 +1263,12 @@ export function buildEndlessLevel(
       primaryPool[(levelId * 3 + 1) % primaryPool.length]!
   }
 
+  const aLoc = resolvePracticeExercise(a, locale)
+  const bLoc = resolvePracticeExercise(b, locale)
+
   const steps = [
-    ...exerciseToSteps(a, intensity, phase),
-    ...exerciseToSteps(b, intensity, phase),
+    ...exerciseToSteps(a, intensity, phase, locale),
+    ...exerciseToSteps(b, intensity, phase, locale),
   ]
   const toolNames = [...new Set(steps.map((s) => s.tool).filter(Boolean) as ToolId[])].map(
     toolName,
@@ -1232,10 +1301,10 @@ export function buildEndlessLevel(
         ? `Mutualis Retail — role batch M${intensity}`
         : `Mutualis Retail — lot rôle M${intensity}`,
       context: en
-        ? `${a.context}\n\nYou practice ${toolNames.join(' · ')} through a ${decisionLabel}, then a technical deliverable.`
-        : `${a.context}\n\nTu travailles ${toolNames.join(' · ')} via une ${decisionLabel}, puis un livrable technique.`,
-      problem: a.description,
-      objectives: [...a.tasks.slice(0, 3), ...b.tasks.slice(0, 2)].slice(0, 4),
+        ? `${aLoc.context}\n\nYou practice ${toolNames.join(' · ')} through a ${decisionLabel}, then a technical deliverable.`
+        : `${aLoc.context}\n\nTu travailles ${toolNames.join(' · ')} via une ${decisionLabel}, puis un livrable technique.`,
+      problem: aLoc.description,
+      objectives: [...aLoc.tasks.slice(0, 3), ...bLoc.tasks.slice(0, 2)].slice(0, 4),
       consigne: en
         ? `${track === 'governance' ? 'Governance question' : 'PM question'} first → then situational hands-on practice (role stack) + data DoD.`
         : `${track === 'governance' ? 'Question gouvernance' : 'Question gestion de projet'} d’abord → puis mise en situation et manipulation pratique (stack rôle) + DoD data.`,
@@ -1276,16 +1345,50 @@ function enrichStep(
   }
 }
 
+function localizeCuratedStep(
+  step: AdventureStep,
+  locale: PmGameLocale,
+): AdventureStep {
+  if (locale !== 'en') return step
+  const en = curatedStepEn(step.id)
+  if (!en) return step
+  return {
+    ...step,
+    title: en.title,
+    say: en.say,
+    do: en.do,
+    how: en.how,
+    trap: en.trap,
+    placeholder: en.placeholder ?? step.placeholder,
+    feedbackPass: en.feedbackPass,
+    feedbackFail: en.feedbackFail,
+    correction: en.correction,
+  }
+}
+
 function enrichLevel(level: AdventureLevel, locale: PmGameLocale = 'fr'): AdventureLevel {
   const phaseLabels = locale === 'en' ? PHASE_LABELS_EN : PHASE_LABELS
+  const curatedEn =
+    locale === 'en' && !level.endless ? curatedLevelEn(level.id) : undefined
+
+  const base: AdventureLevel = curatedEn
+    ? {
+        ...level,
+        title: curatedEn.title,
+        intro: curatedEn.intro,
+        brief: { ...curatedEn.brief },
+      }
+    : level
+
   return {
-    ...level,
-    // Keep phase label consistent when endless title already baked in FR — rebuild title if endless
+    ...base,
     title:
-      level.endless && locale === 'en'
-        ? `${phaseLabels[level.phase]} · batch M${level.id}`
-        : level.title,
-    steps: level.steps.map((s) => enrichStep(s, level.id, locale)),
+      base.endless && locale === 'en'
+        ? `${phaseLabels[base.phase]} · batch M${base.id}`
+        : base.title,
+    steps: base.steps
+      .map((s) => localizeCuratedStep(s, locale))
+      .map((s) => enrichStep(s, base.id, locale)),
   }
 }
 

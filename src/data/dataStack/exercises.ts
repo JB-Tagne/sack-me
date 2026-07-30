@@ -1,5 +1,7 @@
 /** Exercices PM Game — format pédagogique évaluatif. */
 
+import type { PmGameLocale } from '../../i18n/pmGameLocale'
+import { exerciseEnOverlay } from './exercises.en'
 import type { ToolId } from './tools'
 
 export type ExerciseQuestionKind = 'mcq' | 'short'
@@ -2015,4 +2017,25 @@ SELECT * FROM ranked WHERE rn = 1;`,
 
 export function exercisesForTool(tool: ToolId): PracticeExercise[] {
   return PRACTICE_EXERCISES.filter((e) => e.tool === tool).sort((a, b) => a.level - b.level)
+}
+
+/** Merge French base exercise with English overlay when locale is en. */
+export function resolvePracticeExercise(
+  ex: PracticeExercise,
+  locale: PmGameLocale = 'fr',
+): PracticeExercise {
+  if (locale !== 'en') return ex
+  const en = exerciseEnOverlay(ex.id)
+  if (!en) return ex
+  return {
+    ...ex,
+    title: en.title,
+    context: en.context,
+    description: en.description,
+    tasks: en.tasks,
+    steps: en.steps,
+    trap: en.trap,
+    questions: en.questions,
+    modelSolution: en.modelSolution,
+  }
 }

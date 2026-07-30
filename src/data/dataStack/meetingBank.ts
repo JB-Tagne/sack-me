@@ -3,7 +3,14 @@
  * Chaque réunion propose 5 QCM interactifs. Les réunions COMEX fire
  * ont un impact sur le fireRisk (fireRiskDelta négatif = réduction du risque).
  */
+import type { PmGameLocale } from '../../i18n/pmGameLocale'
 import type { MeetingStep } from './pmGovTypes'
+import {
+  COMEX_MEETINGS_EN,
+  COPIL_BANK_EN,
+  COPROJ_BANK_EN,
+  SCRUM_BANK_EN,
+} from './meetingBank.en'
 
 // ─── COPROJ — Comités de Projet avec l'équipe ────────────────────────────────
 
@@ -1127,16 +1134,29 @@ export const COMEX_MEETINGS: Record<
  * - Toutes les 4 tâches : 1 événement Scrum (cyclique)
  * Les COMEX fire sont injectés par le système fireAlert — pas ici.
  */
-export function getMeetingForStep(globalStepIndex: number): MeetingStep | null {
+export function getMeetingForStep(
+  globalStepIndex: number,
+  locale: PmGameLocale = 'fr',
+): MeetingStep | null {
+  const copil = locale === 'en' ? COPIL_BANK_EN : COPIL_BANK
+  const scrum = locale === 'en' ? SCRUM_BANK_EN : SCRUM_BANK
+  const coproj = locale === 'en' ? COPROJ_BANK_EN : COPROJ_BANK
   if (globalStepIndex === 0) return null
   if (globalStepIndex % 6 === 0) {
-    return COPIL_BANK[(globalStepIndex / 6 - 1) % COPIL_BANK.length]!
+    return copil[(globalStepIndex / 6 - 1) % copil.length]!
   }
   if (globalStepIndex % 4 === 0) {
-    return SCRUM_BANK[(globalStepIndex / 4 - 1) % SCRUM_BANK.length]!
+    return scrum[(globalStepIndex / 4 - 1) % scrum.length]!
   }
   if (globalStepIndex % 3 === 0) {
-    return COPROJ_BANK[(globalStepIndex / 3 - 1) % COPROJ_BANK.length]!
+    return coproj[(globalStepIndex / 3 - 1) % coproj.length]!
   }
   return null
+}
+
+export function resolveComexMeeting(
+  kind: keyof typeof COMEX_MEETINGS,
+  locale: PmGameLocale = 'fr',
+): MeetingStep {
+  return locale === 'en' ? COMEX_MEETINGS_EN[kind] : COMEX_MEETINGS[kind]
 }

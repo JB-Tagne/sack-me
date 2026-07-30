@@ -52,7 +52,7 @@ import { PmGameIntro } from '../components/PmGameIntro'
 import { PmGameFireAlert } from '../components/PmGameFireAlert'
 import { PmGameCareerPick } from '../components/PmGameCareerPick'
 import { PmGameMeeting } from '../components/PmGameMeeting'
-import { getMeetingForStep, COMEX_MEETINGS } from '../data/dataStack/meetingBank'
+import { getMeetingForStep, COMEX_MEETINGS, resolveComexMeeting } from '../data/dataStack/meetingBank'
 import type { MeetingStep } from '../data/dataStack/pmGovTypes'
 import type { PmGameLocale } from '../i18n/pmGameLocale'
 import {
@@ -441,7 +441,7 @@ function DataStackPageInner() {
 
   function startHalfForStep(s: AdventureStep | undefined, globalIdx?: number): AdventureStepHalf {
     // Si une réunion périodique est prévue à cet index global, on commence par elle
-    if (globalIdx !== undefined && getMeetingForStep(globalIdx)) return 'meeting'
+    if (globalIdx !== undefined && getMeetingForStep(globalIdx, locale)) return 'meeting'
     if (roleTrack === 'governance') {
       return s?.governance ? 'gov' : 'tech'
     }
@@ -546,7 +546,7 @@ function DataStackPageInner() {
       const nextStep = level.steps[nextIndex]!
       // Calcul de l'index global pour détecter si une réunion doit se déclencher
       const nextGlobal = globalStepIndex({ ...progress, stepIndex: nextIndex })
-      const periodicMeeting = getMeetingForStep(nextGlobal)
+      const periodicMeeting = getMeetingForStep(nextGlobal, locale)
 
       const nextHalf = startHalfForStep(nextStep, nextGlobal)
       persistFrom((prev) => ({
@@ -675,7 +675,7 @@ function DataStackPageInner() {
     if (!fireAlert) return
     // Toutes les alertes COMEX passent par une réunion interactive
     const meetingKind = `comex-${fireAlert}` as keyof typeof COMEX_MEETINGS
-    const meeting = COMEX_MEETINGS[meetingKind]
+    const meeting = resolveComexMeeting(meetingKind, locale)
     if (meeting) {
       // On garde fireAlert actif — il sera résolu dans onMeetingClose
       triggerMeeting(meeting)
@@ -833,7 +833,7 @@ function DataStackPageInner() {
   useEffect(() => {
     if (phase === 'play' && stepHalf === 'meeting' && !activeMeeting) {
       const gIdx = globalStepIndex(progress)
-      const meeting = getMeetingForStep(gIdx)
+      const meeting = getMeetingForStep(gIdx, locale)
       if (meeting) {
         triggerMeeting(meeting)
       }

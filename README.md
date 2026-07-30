@@ -55,6 +55,7 @@ npm run preview
 - **Lots 0–5** : parcours scripté (SQL, Python, dbt, Airflow…) + QCM PM/gouvernance dédiés par étape
 - **Lot 6+** : exercices tirés de la stack jouable du rôle (outils distincts par lot quand possible)
 - Brief : enjeu rôle + contexte filiale · phases alignées sur le lot
+- Locale **FR / EN** : lots curatés, exercices, réunions (COPROJ/COPIL/Scrum/COMEX), QCM PM/gouvernance
 - `fireRisk` : trop d’erreurs → COMEX / licenciement
 
 **Jouer en ligne :** [https://jb-tagne.github.io/sack-me/](https://jb-tagne.github.io/sack-me/)
@@ -159,6 +160,7 @@ npm run preview
 - **Batches 0–5**: scripted path (SQL, Python, dbt, Airflow…) + dedicated PM/governance QCM per step
 - **Batch 6+**: exercises from the role playable stack (distinct tools per batch when possible)
 - Brief: role stakes + subsidiary context · phases aligned with the batch
+- Locale **FR / EN**: curated batches, exercises, meetings (COPROJ/COPIL/Scrum/COMEX), PM/governance quizzes
 - `fireRisk`: too many mistakes → exec committee / fired
 
 **Play online:** [https://jb-tagne.github.io/sack-me/](https://jb-tagne.github.io/sack-me/)

@@ -4,6 +4,7 @@ import { usePmGameI18n } from '../i18n/PmGameI18n'
 interface PmGameFireAlertProps {
   level: FireAlertLevel
   fireRisk: number
+  firstName?: string
   onAcknowledge: () => void
 }
 
@@ -18,7 +19,12 @@ const ICONS: Record<NonNullable<FireAlertLevel>, string> = {
  * Panneau narratif COMEX bloquant — s'affiche après une mauvaise décision
  * quand le fireRisk franchit un seuil critique.
  */
-export function PmGameFireAlert({ level, fireRisk, onAcknowledge }: PmGameFireAlertProps) {
+export function PmGameFireAlert({
+  level,
+  fireRisk,
+  firstName = '',
+  onAcknowledge,
+}: PmGameFireAlertProps) {
   const { t } = usePmGameI18n()
   if (!level) return null
 
@@ -32,7 +38,7 @@ export function PmGameFireAlert({ level, fireRisk, onAcknowledge }: PmGameFireAl
         <div className="fire-alert-icon" aria-hidden>{ICONS[level]}</div>
         <p className="fire-alert-risk" aria-hidden>{fireRisk} %</p>
         <h2 id="fire-alert-title" className="fire-alert-title">{t(titleKey)}</h2>
-        <p className="fire-alert-body">{t(bodyKey)}</p>
+        <p className="fire-alert-body">{t(bodyKey, { firstName })}</p>
         <button
           type="button"
           className={`btn fire-alert-cta${level === 'fired' ? ' fire-alert-cta-fired' : ' adventure-cta'}`}

@@ -28,6 +28,8 @@ import {
   type CareerMode,
 } from '../lib/careerTrack'
 import { buzz, celebrate } from '../lib/hubPlay'
+import { personalizeMeetingStep } from '../lib/personalizeMeeting'
+import { playerFirstName } from '../lib/playerIdentity'
 import { shareOrCopyScore } from '../lib/shareScore'
 import { adaptLevelForRole } from '../data/dataStack/adaptLevelForRole'
 import { datasetHint } from '../data/dataStack/gameDatasets'
@@ -242,11 +244,19 @@ function DataStackPageInner() {
     setPhase(nextPhase)
   }
 
-  function onChooseLandingLanguage(next: PmGameLocale) {
+  function onChooseLandingLanguage(next: PmGameLocale, displayName: string) {
     setLocale(next)
     const p = loadAdventureProgress()
-    if (p.started && (p.completedStepIds.length > 0 || p.career.wins > 0 || p.levelId > 0)) {
-      enterGameAfterLanding(p)
+    const withName: AdventureProgress = { ...p, playerDisplayName: displayName }
+    saveAdventureProgress(withName)
+    setProgress(withName)
+    if (
+      withName.started &&
+      (withName.completedStepIds.length > 0 ||
+        withName.career.wins > 0 ||
+        withName.levelId > 0)
+    ) {
+      enterGameAfterLanding(withName)
       return
     }
     setLandingStep('intro')
@@ -340,7 +350,9 @@ function DataStackPageInner() {
   function restartCampaign() {
     const ok = window.confirm(t('nav.restartConfirm'))
     if (!ok) return
-    const next = resetAdventureProgress()
+    const next = resetAdventureProgress({
+      keepPlayerDisplayName: progress.playerDisplayName,
+    })
     setProgress(next)
     setPhase('career-pick')
     setLandingStep('title')
@@ -456,9 +468,10 @@ function DataStackPageInner() {
     return globalAdventureStepIndex(p.levelId, p.stepIndex)
   }
 
-  /** Lance une réunion et bloque l'UI jusqu'à la fin des 5 questions. */
+  /** Launch a meeting and block the UI until all 5 questions are done. */
   function triggerMeeting(meeting: MeetingStep) {
-    setActiveMeeting(meeting)
+    const first = playerFirstName(progress.playerDisplayName)
+    setActiveMeeting(personalizeMeetingStep(meeting, first))
     setMeetingQIndex(0)
     setMeetingAnswers([])
   }
@@ -511,7 +524,9 @@ function DataStackPageInner() {
       const updatedRisk = progress.career.fireRisk
       if (kind === 'comex-fired' && updatedRisk >= 100) {
         // Licenciement confirmé : reset
-        const next = resetAdventureProgress()
+        const next = resetAdventureProgress({
+          keepPlayerDisplayName: progress.playerDisplayName,
+        })
         setProgress(next)
         setPhase('career-pick')
         setLandingStep('title')
@@ -904,6 +919,8 @@ function DataStackPageInner() {
       })
     : lotCast
   const hudRoleLabel = posteLabel(progress.career.careerScore, locale, pathRoleLabel)
+  const playerName = progress.playerDisplayName?.trim() ?? ''
+  const firstName = playerFirstName(playerName)
   const fireRisk = progress.career.fireRisk
   const fireTone = fireRisk >= 75 ? 'critical' : fireRisk >= 50 ? 'warn' : 'ok'
   const hudLevelLabel =
@@ -915,9 +932,12 @@ function DataStackPageInner() {
     return (
       <div className="adventure adventure-landing-screen">
         {landingStep === 'title' ? (
-          <PmGameLanding onChoose={onChooseLandingLanguage} />
+          <PmGameLanding
+            initialDisplayName={playerName}
+            onChoose={onChooseLandingLanguage}
+          />
         ) : (
-          <PmGameIntro onContinue={onContinueFromIntro} />
+          <PmGameIntro firstName={firstName} onContinue={onContinueFromIntro} />
         )}
       </div>
     )
@@ -945,6 +965,12 @@ function DataStackPageInner() {
         <div className="adventure-top-actions">
           <PmGameLangToggle />
           <div className="adventure-hud">
+            {firstName ? (
+              <div className="adventure-hud-item" title={playerName}>
+                <span>{t('hud.player')}</span>
+                <strong className="adventure-hud-title">{firstName}</strong>
+              </div>
+            ) : null}
             <div className="adventure-hud-item" title={careerTitle.blurb}>
               <span>{t('hud.role')}</span>
               <strong className="adventure-hud-title">{hudRoleLabel}</strong>
@@ -995,18 +1021,18 @@ function DataStackPageInner() {
             <section key={animKey} className="adventure-panel adventure-enter">
               <div className="adventure-brief-block adventure-welcome">
                 <h2 ref={panelHeadingRef} tabIndex={-1}>
-                  {t('welcome.title')}
+                  {t('welcome.title', { firstName })}
                 </h2>
                 <p className="adventure-welcome-hook">
                   {campaignStory
                     ? locale === 'en'
-                      ? `${campaignStory.codename} — assigned to ${homeCompany.name} (${MUTUALIS_GROUP_NAME}) as ${pathRoleLabel}. ${campaignStory.tagline.replace(/Mutualis Retail/gi, homeCompany.name)}`
-                      : `${campaignStory.codename} — affecté(e) à ${homeCompany.name} (${MUTUALIS_GROUP_NAME}) en tant que ${pathRoleLabel}. ${campaignStory.tagline.replace(/Mutualis Retail/gi, homeCompany.name)}`
+                      ? `${firstName ? `${firstName} — ` : ''}${campaignStory.codename} — assigned to ${homeCompany.name} (${MUTUALIS_GROUP_NAME}) as ${pathRoleLabel}. ${campaignStory.tagline.replace(/Mutualis Retail/gi, homeCompany.name)}`
+                      : `${firstName ? `${firstName} — ` : ''}${campaignStory.codename} — affecté(e) à ${homeCompany.name} (${MUTUALIS_GROUP_NAME}) en tant que ${pathRoleLabel}. ${campaignStory.tagline.replace(/Mutualis Retail/gi, homeCompany.name)}`
                     : pathRoleLabel
                       ? locale === 'en'
-                        ? `You join as ${pathRoleLabel} at ${homeCompany.name} — ${trackLabel(roleTrack, 'en')} track.`
-                        : `Tu intègres le poste de ${pathRoleLabel} chez ${homeCompany.name} — piste ${trackLabel(roleTrack, 'fr')}.`
-                      : t('welcome.hook')}
+                        ? `${firstName ? `${firstName}, ` : ''}you join as ${pathRoleLabel} at ${homeCompany.name} — ${trackLabel(roleTrack, 'en')} track.`
+                        : `${firstName ? `${firstName}, ` : ''}tu intègres le poste de ${pathRoleLabel} chez ${homeCompany.name} — piste ${trackLabel(roleTrack, 'fr')}.`
+                      : t('welcome.hook', { firstName })}
                 </p>
                 {campaignStory && (
                   <p className="adventure-welcome-scope">
@@ -1037,7 +1063,9 @@ function DataStackPageInner() {
                   </div>
                 </div>
                 <p>{t(roleTrack === 'governance' ? 'welcome.flow.gov' : 'welcome.flow.pm')}</p>
-                <p className="adventure-welcome-cta-line">{t('welcome.ctaLine')}</p>
+                <p className="adventure-welcome-cta-line">
+                  {t('welcome.ctaLine', { firstName })}
+                </p>
               </div>
               <div className="adventure-actions">
                 <button type="button" className="btn adventure-cta" onClick={startGame}>
@@ -1512,6 +1540,7 @@ function DataStackPageInner() {
               </div>
               {progress.levelId === curatedCount() && pathRoleLabel && campaignStory && (
                 <CampaignCertificate
+                  firstName={firstName}
                   roleLabel={pathRoleLabel}
                   company={homeCompany.name}
                   codename={campaignStory.codename}
@@ -1525,6 +1554,7 @@ function DataStackPageInner() {
                       roleLabel: pathRoleLabel,
                       company: homeCompany.name,
                       locale,
+                      playerName: firstName || playerName,
                     }).then((r) => setShareStatus(r))
                   }}
                 />
@@ -1577,6 +1607,7 @@ function DataStackPageInner() {
       <PmGameFireAlert
         level={fireAlert}
         fireRisk={progress.career.fireRisk}
+        firstName={firstName}
         onAcknowledge={acknowledgeFireAlert}
       />
     )}

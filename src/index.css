@@ -645,13 +645,68 @@ h3 {
   color: #111111;
 }
 
+.pm-landing-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 22rem;
+  margin: 2.4rem auto 0;
+  width: 100%;
+  opacity: 0;
+  animation: pm-landing-fade-in 0.5s ease forwards;
+}
+
+.pm-landing-name-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #222222;
+}
+
+.pm-landing-name-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #555555;
+  text-align: center;
+}
+
+.pm-landing-name-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.35rem;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid #1a1a1a;
+  border-radius: 0;
+  background: #fffef8;
+  font: inherit;
+  font-size: 1.05rem;
+  text-align: center;
+  color: #111111;
+}
+
+.pm-landing-name-input:focus {
+  outline: 3px solid #f0b429;
+  outline-offset: 2px;
+}
+
+.pm-landing-name-error {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: #a11;
+  text-align: center;
+}
+
 .pm-landing-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  margin-top: 3.2rem;
+  margin-top: 2rem;
   opacity: 0;
   animation: pm-landing-fade-in 0.5s ease forwards;
 }

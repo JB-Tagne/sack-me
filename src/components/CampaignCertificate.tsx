@@ -1,6 +1,7 @@
 import { usePmGameI18n } from '../i18n/PmGameI18n'
 
 interface CampaignCertificateProps {
+  firstName?: string
   roleLabel: string
   company: string
   codename: string
@@ -12,6 +13,7 @@ interface CampaignCertificateProps {
 
 /** Shown when the player finishes curated batches 0–5. */
 export function CampaignCertificate({
+  firstName = '',
   roleLabel,
   company,
   codename,
@@ -26,10 +28,12 @@ export function CampaignCertificate({
       <p className="adventure-certificate-eyebrow">{t('cert.eyebrow')}</p>
       <h3 className="adventure-certificate-title">{t('cert.title')}</h3>
       <p className="adventure-certificate-body">
-        {t('cert.body')
-          .replace('{role}', roleLabel)
-          .replace('{company}', company)
-          .replace('{codename}', codename)}
+        {t('cert.body', {
+          firstName,
+          role: roleLabel,
+          company,
+          codename,
+        })}
       </p>
       <p className="adventure-certificate-score">
         {t('cert.score')}: <strong>{score}</strong> · {title}

@@ -17,7 +17,7 @@ import { pmGameUi } from './pmGameUi'
 interface PmGameI18nValue {
   locale: PmGameLocale
   setLocale: (locale: PmGameLocale) => void
-  t: (key: string) => string
+  t: (key: string, vars?: Record<string, string>) => string
 }
 
 const PmGameI18nContext = createContext<PmGameI18nValue | null>(null)
@@ -38,7 +38,7 @@ export function PmGameI18nProvider({ children }: { children: ReactNode }) {
     () => ({
       locale,
       setLocale,
-      t: (key: string) => pmGameUi(locale, key),
+      t: (key: string, vars?: Record<string, string>) => pmGameUi(locale, key, vars),
     }),
     [locale, setLocale],
   )
@@ -54,6 +54,7 @@ export function usePmGameI18n(): PmGameI18nValue {
   return {
     locale: loadPmGameLocale(),
     setLocale: savePmGameLocale,
-    t: (key: string) => pmGameUi(loadPmGameLocale(), key),
+    t: (key: string, vars?: Record<string, string>) =>
+      pmGameUi(loadPmGameLocale(), key, vars),
   }
 }

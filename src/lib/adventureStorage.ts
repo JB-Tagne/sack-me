@@ -81,6 +81,11 @@ export interface AdventureProgress {
   playerRole?: PlayerRoleId
   /** Entreprise d’affectation dans Mutualis Group. */
   homeEntity?: MutualisEntityId
+  /**
+   * Player display name as "First Last" (no email).
+   * First name is used in UI and NPC dialogue.
+   */
+  playerDisplayName?: string
   started: boolean
   /** Phase UI persistée pour reprise fidèle. */
   phase: AdventureUiPhase
@@ -206,13 +211,17 @@ export function saveAdventureProgress(p: AdventureProgress): void {
   }
 }
 
-export function resetAdventureProgress(): AdventureProgress {
+export function resetAdventureProgress(opts?: {
+  keepPlayerDisplayName?: string
+}): AdventureProgress {
+  const kept = opts?.keepPlayerDisplayName?.trim()
   const next = {
     ...empty,
     drafts: {},
     toolStats: {},
     career: { ...EMPTY_CAREER },
     stepHalf: 'pm' as const,
+    ...(kept ? { playerDisplayName: kept } : {}),
   }
   saveAdventureProgress(next)
   return next

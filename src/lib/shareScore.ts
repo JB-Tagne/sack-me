@@ -9,6 +9,7 @@ export interface ScoreSharePayload {
   company: string
   locale: PmGameLocale
   liveUrl?: string
+  playerName?: string
 }
 
 export function formatScoreShareText(p: ScoreSharePayload): string {
@@ -16,6 +17,7 @@ export function formatScoreShareText(p: ScoreSharePayload): string {
   if (p.locale === 'en') {
     return [
       `Sack Me! — Mutualis career`,
+      p.playerName ? `Player: ${p.playerName}` : null,
       `Title: ${p.title}`,
       p.roleLabel ? `Role: ${p.roleLabel}` : null,
       `Company: ${p.company}`,
@@ -27,6 +29,7 @@ export function formatScoreShareText(p: ScoreSharePayload): string {
   }
   return [
     `Sack Me! — carrière Mutualis`,
+    p.playerName ? `Joueur : ${p.playerName}` : null,
     `Titre : ${p.title}`,
     p.roleLabel ? `Rôle : ${p.roleLabel}` : null,
     `Entreprise : ${p.company}`,

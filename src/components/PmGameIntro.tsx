@@ -1,27 +1,32 @@
 import { usePmGameI18n } from '../i18n/PmGameI18n'
 
 interface PmGameIntroProps {
+  firstName?: string
   onContinue: () => void
 }
 
-const FR_LINES = [
+const FR_LINES = (firstName: string) => [
   'Sack Me!',
   'le jeu d\u2019aventure orient\u00e9 gestion de projet et gouvernance.',
-  'Tu choisis un r\u00f4le. Tu m\u00e8nes \u00e0 bien les t\u00e2ches qui te sont confi\u00e9es et tu \u00e9volues.',
+  firstName
+    ? `${firstName}, tu choisis un r\u00f4le. Tu m\u00e8nes \u00e0 bien les t\u00e2ches qui te sont confi\u00e9es et tu \u00e9volues.`
+    : 'Tu choisis un r\u00f4le. Tu m\u00e8nes \u00e0 bien les t\u00e2ches qui te sont confi\u00e9es et tu \u00e9volues.',
   'Toute mauvaise d\u00e9cision te rapproche de la sortie.',
 ]
 
-const EN_LINES = [
+const EN_LINES = (firstName: string) => [
   'Sack Me!',
   'An adventure game focused on project management and governance.',
-  'You choose a role. You complete the tasks assigned to you and grow in your career.',
+  firstName
+    ? `${firstName}, you choose a role. You complete the tasks assigned to you and grow in your career.`
+    : 'You choose a role. You complete the tasks assigned to you and grow in your career.',
   'Every bad decision brings you closer to the exit.',
 ]
 
-/** Page d'intro — pitch du jeu dans la langue choisie, animé ligne par ligne. */
-export function PmGameIntro({ onContinue }: PmGameIntroProps) {
+/** Intro page — game pitch in the chosen language, line-by-line animation. */
+export function PmGameIntro({ firstName = '', onContinue }: PmGameIntroProps) {
   const { locale, t } = usePmGameI18n()
-  const lines = locale === 'en' ? EN_LINES : FR_LINES
+  const lines = locale === 'en' ? EN_LINES(firstName) : FR_LINES(firstName)
 
   return (
     <div className="pm-landing pm-intro adventure-enter">

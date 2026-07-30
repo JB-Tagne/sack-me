@@ -8,6 +8,7 @@ const fr: Dict = {
   'header.title': 'Ta carrière projet commence ici',
   'header.sub': 'Selon ton rôle : gestion de projet ou gouvernance — tu évolues, ou tu sors',
   'header.resume': 'reprise',
+  'hud.player': 'Joueur',
   'hud.role': 'Poste',
   'hud.fire': 'Risque de licenciement',
   'hud.career': 'Évolution',
@@ -37,11 +38,15 @@ const fr: Dict = {
   'landing.intro':
     'Sack Me!, le jeu d’aventure orienté gestion de projet et gouvernance. Tu choisis un rôle. Tu mènes à bien les tâches qui te sont confiées et tu évolues. Toute mauvaise décision te rapproche de la sortie.',
   'landing.continue': 'Continuer',
-  'welcome.title': 'Bienvenue chez Mutualis Group',
+  'landing.nameLabel': 'Pseudo joueur (Prénom Nom)',
+  'landing.nameHint': 'Format Prénom Nom — pas besoin d’adresse e-mail.',
+  'landing.nameError':
+    'Saisis ton pseudo au format Prénom Nom (ex. Alex Martin). Pas besoin d’e-mail.',
+  'welcome.title': 'Bienvenue chez Mutualis Group, {firstName}',
   'cast.chip': 'Casting du lot',
   'cast.step': 'Filiales sur cette tâche',
   'welcome.hook':
-    'Tu viens d’intégrer une squad Mutualis Group. Le COMEX te regarde. L’équipe aussi.',
+    '{firstName}, tu viens d’intégrer une squad Mutualis Group. Le COMEX te regarde. L’équipe aussi.',
   'welcome.job':
     'Ton job dépend de ton rôle : arbitrer comme un PM, ou gouverner la donnée — toujours avec un livrable technique concret.',
   'welcome.job.pm':
@@ -60,7 +65,7 @@ const fr: Dict = {
     'À chaque tâche : question projet (méthode + soft skills : conflit, personnes, décision, communication) → mise en situation + manipulation pratique + DoD.',
   'welcome.flow.gov':
     'À chaque tâche : question gouvernance / soft skills data → mise en situation + manipulation pratique (outil de ta stack) + DoD.',
-  'welcome.ctaLine': 'Prêt à intégrer l’équipe et à défendre ta place ?',
+  'welcome.ctaLine': '{firstName}, prêt à intégrer l’équipe et à défendre ta place ?',
   'welcome.start': 'Intégrer l’équipe — ouvrir le briefing',
   'welcome.resume': 'Reprendre le poste',
   'welcome.risk': 'risque',
@@ -160,7 +165,7 @@ const fr: Dict = {
   'cert.eyebrow': 'Mutualis Learning',
   'cert.title': 'Attestation — fondations validées',
   'cert.body':
-    'Tu as terminé les 6 lots curatés en tant que {role} chez {company} ({codename}). Tu peux enchaîner sur les lots infinis de ta stack.',
+    '{firstName}, tu as terminé les 6 lots curatés en tant que {role} chez {company} ({codename}). Tu peux enchaîner sur les lots infinis de ta stack.',
   'cert.score': 'Score carrière',
   'cert.share': 'Partager mon score',
   'cert.copied': 'Score copié dans le presse-papiers.',
@@ -205,22 +210,22 @@ const fr: Dict = {
 
   'fire.danger.title': 'Signal COMEX — zone de danger',
   'fire.danger.body':
-    "Le COMEX a pris note de tes dernières décisions. L'ambiance se tend. Les regards se tournent vers toi. Tu dois redresser la barre maintenant — chaque erreur supplémentaire rapproche la convocation.",
+    "{firstName}, le COMEX a pris note de tes dernières décisions. L'ambiance se tend. Les regards se tournent vers toi. Tu dois redresser la barre maintenant — chaque erreur supplémentaire rapproche la convocation.",
   'fire.danger.cta': "J'ai compris — continuer",
 
   'fire.warning.title': 'Convocation COMEX — dernier avertissement',
   'fire.warning.body':
-    "Réunion de mise au point. Le Directeur général pose le dossier sur la table : « Les résultats ne sont pas au niveau. C'est votre dernier avertissement. Deux nouvelles erreurs et c'est un préavis. » Tu reprends la main — prouve que tu mérites ta place.",
+    "{firstName}, réunion de mise au point. Le Directeur général pose le dossier sur la table : « Les résultats ne sont pas au niveau. C'est votre dernier avertissement. Deux nouvelles erreurs et c'est un préavis. » Tu reprends la main — prouve que tu mérites ta place.",
   'fire.warning.cta': 'Reprendre les tâches',
 
   'fire.notice.title': 'Préavis de licenciement',
   'fire.notice.body':
-    "La DRH t'a remis une lettre de préavis. Tu es encore en poste — pour l'instant. Si tu réussis les prochaines tâches et fais redescendre le risque sous 80 %, tu peux rester. Sinon, la décision sera définitive.",
+    "{firstName}, la DRH t'a remis une lettre de préavis. Tu es encore en poste — pour l'instant. Si tu réussis les prochaines tâches et fais redescendre le risque sous 80 %, tu peux rester. Sinon, la décision sera définitive.",
   'fire.notice.cta': 'Tenter de se rattraper',
 
   'fire.fired.title': 'Licenciement — Fin de partie',
   'fire.fired.body':
-    "Réunion avec le COMEX. Le DG prononce la décision : « Nous mettons fin à votre contrat avec effet immédiat. Vos accès seront révoqués aujourd'hui. » La partie est terminée. Tu peux recommencer depuis le début.",
+    "{firstName}, réunion avec le COMEX. Le DG prononce la décision : « Nous mettons fin à votre contrat avec effet immédiat. Vos accès seront révoqués aujourd'hui. » La partie est terminée. Tu peux recommencer depuis le début.",
   'fire.fired.cta': "Retour à l'accueil",
 }
 
@@ -230,6 +235,7 @@ const en: Dict = {
   'header.title': 'Your project career starts here',
   'header.sub': 'By role: project management or governance — you grow, or you leave',
   'header.resume': 'resume',
+  'hud.player': 'Player',
   'hud.role': 'Role',
   'hud.fire': 'Layoff risk',
   'hud.career': 'Growth',
@@ -258,11 +264,15 @@ const en: Dict = {
   'landing.intro':
     'Sack Me! is an adventure game focused on project management and governance. You choose a role. You complete the tasks assigned to you and grow in your career. Every bad decision brings you closer to the exit.',
   'landing.continue': 'Continue',
-  'welcome.title': 'Welcome to Mutualis Group',
+  'landing.nameLabel': 'Player name (First Last)',
+  'landing.nameHint': 'Format First Last — no email required.',
+  'landing.nameError':
+    'Enter your player name as First Last (e.g. Alex Martin). No email needed.',
+  'welcome.title': 'Welcome to Mutualis Group, {firstName}',
   'cast.chip': 'Exercise cast',
   'cast.step': 'Entities on this task',
   'welcome.hook':
-    'You just joined a Mutualis Group squad. The exec committee is watching. So is the team.',
+    '{firstName}, you just joined a Mutualis Group squad. The exec committee is watching. So is the team.',
   'welcome.job':
     'Your job depends on your role: decide like a PM, or govern data — always with a concrete technical deliverable.',
   'welcome.job.pm':
@@ -281,7 +291,7 @@ const en: Dict = {
     'Every task: project question (methods + soft skills: conflict, people, decisions, communication) → situational hands-on practice + DoD.',
   'welcome.flow.gov':
     'Every task: governance / data soft-skills question → situational hands-on practice (your stack tool) + DoD.',
-  'welcome.ctaLine': 'Ready to join the team and defend your seat?',
+  'welcome.ctaLine': '{firstName}, ready to join the team and defend your seat?',
   'welcome.start': 'Join the team — open the briefing',
   'welcome.resume': 'Resume role',
   'welcome.risk': 'risk',
@@ -381,7 +391,7 @@ const en: Dict = {
   'cert.eyebrow': 'Mutualis Learning',
   'cert.title': 'Certificate — foundations cleared',
   'cert.body':
-    'You finished the 6 curated batches as {role} at {company} ({codename}). You can continue into endless role-stack batches.',
+    '{firstName}, you finished the 6 curated batches as {role} at {company} ({codename}). You can continue into endless role-stack batches.',
   'cert.score': 'Career score',
   'cert.share': 'Share my score',
   'cert.copied': 'Score copied to clipboard.',
@@ -427,27 +437,37 @@ const en: Dict = {
 
   'fire.danger.title': 'COMEX Alert — Danger Zone',
   'fire.danger.body':
-    'The exec committee has taken note of your recent decisions. Tension is rising. Eyes are on you. You need to turn this around now — every additional mistake brings the summoning closer.',
+    '{firstName}, the exec committee has taken note of your recent decisions. Tension is rising. Eyes are on you. You need to turn this around now — every additional mistake brings the summoning closer.',
   'fire.danger.cta': 'Understood — continue',
 
   'fire.warning.title': 'COMEX Meeting — Final Warning',
   'fire.warning.body':
-    'A performance review has been called. The CEO places the file on the table: "Results are not at the required level. This is your final warning. Two more mistakes and we issue a notice." You still have the floor — prove you deserve your seat.',
+    '{firstName}, a performance review has been called. The CEO places the file on the table: "Results are not at the required level. This is your final warning. Two more mistakes and we issue a notice." You still have the floor — prove you deserve your seat.',
   'fire.warning.cta': 'Get back to work',
 
   'fire.notice.title': 'Notice of Termination',
   'fire.notice.body':
-    'HR has handed you a notice letter. You are still employed — for now. If you complete the next tasks successfully and bring your risk below 80%, you can stay. Otherwise the decision will be final.',
+    '{firstName}, HR has handed you a notice letter. You are still employed — for now. If you complete the next tasks successfully and bring your risk below 80%, you can stay. Otherwise the decision will be final.',
   'fire.notice.cta': 'Try to recover',
 
   'fire.fired.title': 'Dismissed — Game Over',
   'fire.fired.body':
-    'A final meeting with the exec committee. The CEO delivers the verdict: "We are terminating your contract with immediate effect. Your access will be revoked today." The game is over. You can start again from the beginning.',
+    '{firstName}, a final meeting with the exec committee. The CEO delivers the verdict: "We are terminating your contract with immediate effect. Your access will be revoked today." The game is over. You can start again from the beginning.',
   'fire.fired.cta': 'Back to home',
 }
 
 const TABLES: Record<PmGameLocale, Dict> = { fr, en }
 
-export function pmGameUi(locale: PmGameLocale, key: string): string {
-  return TABLES[locale][key] ?? TABLES.fr[key] ?? key
+export function pmGameUi(
+  locale: PmGameLocale,
+  key: string,
+  vars?: Record<string, string>,
+): string {
+  let text = TABLES[locale][key] ?? TABLES.fr[key] ?? key
+  if (vars) {
+    for (const [name, value] of Object.entries(vars)) {
+      text = text.replaceAll(`{${name}}`, value)
+    }
+  }
+  return text
 }

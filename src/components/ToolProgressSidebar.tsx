@@ -70,11 +70,25 @@ export function ToolProgressSidebar({
   const focus = difficultyFocusTools(toolStats, 5).filter(
     (id) => rolePlayableTools.length === 0 || rolePlayableTools.includes(id),
   )
+  const masteryScores = ringTools
+    .map((tool) => masteryScore(toolStats[tool.id]))
+    .filter((s): s is number => s != null)
+  const masteryAvg =
+    masteryScores.length === 0
+      ? null
+      : Math.round(
+          (masteryScores.reduce((sum, s) => sum + s, 0) / masteryScores.length) * 100,
+        )
 
   return (
     <aside className="adventure-side" aria-label={t('side.title')}>
       <h2 className="adventure-side-title">{t('side.title')}</h2>
       <p className="adventure-side-lead">{t('side.lead')}</p>
+      {masteryAvg != null && (
+        <p className="adventure-side-mastery">
+          {t('side.mastery')}: <strong>{masteryAvg}%</strong>
+        </p>
+      )}
 
       {roleMarketToolNames.length > 0 && (
         <p className="adventure-side-stack" aria-label={t('side.roleStack')}>

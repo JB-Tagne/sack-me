@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -29,6 +30,10 @@ export function PmGameI18nProvider({ children }: { children: ReactNode }) {
     savePmGameLocale(next)
   }, [])
 
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
+
   const value = useMemo<PmGameI18nValue>(
     () => ({
       locale,
@@ -46,7 +51,6 @@ export function PmGameI18nProvider({ children }: { children: ReactNode }) {
 export function usePmGameI18n(): PmGameI18nValue {
   const ctx = useContext(PmGameI18nContext)
   if (ctx) return ctx
-  // Fallback : évite de planter tout le site si HMR / import hors provider.
   return {
     locale: loadPmGameLocale(),
     setLocale: savePmGameLocale,

@@ -56,9 +56,15 @@ npm run preview
 - **Lot 6+** : exercices tirés de la stack jouable du rôle (outils distincts par lot quand possible)
 - Brief : enjeu rôle + contexte filiale · phases alignées sur le lot
 - Locale **FR / EN** : lots curatés, exercices, réunions (COPROJ/COPIL/Scrum/COMEX), QCM PM/gouvernance
+- Attestation après les 6 lots curatés + partage de score · radar maîtrise outils
 - `fireRisk` : trop d’erreurs → COMEX / licenciement
 
 **Jouer en ligne :** [https://jb-tagne.github.io/sack-me/](https://jb-tagne.github.io/sack-me/)
+
+```bash
+npm test          # unit
+npm run test:e2e  # smoke Playwright (installe Chromium via test:e2e:install)
+```
 
 ### Contenu de jeu (tables SQL)
 
@@ -161,9 +167,15 @@ npm run preview
 - **Batch 6+**: exercises from the role playable stack (distinct tools per batch when possible)
 - Brief: role stakes + subsidiary context · phases aligned with the batch
 - Locale **FR / EN**: curated batches, exercises, meetings (COPROJ/COPIL/Scrum/COMEX), PM/governance quizzes
+- Certificate after 6 curated batches + score share · tool mastery radar
 - `fireRisk`: too many mistakes → exec committee / fired
 
 **Play online:** [https://jb-tagne.github.io/sack-me/](https://jb-tagne.github.io/sack-me/)
+
+```bash
+npm test          # unit
+npm run test:e2e  # Playwright smoke (install Chromium via test:e2e:install)
+```
 
 ### Game content (SQL tables)
 

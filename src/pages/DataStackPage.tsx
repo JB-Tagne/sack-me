@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { CampaignCertificate } from '../components/CampaignCertificate'
 import { DeliverablePad } from '../components/DeliverablePad'
 import { ToolOnboardingPanel } from '../components/ToolOnboardingPanel'
 import { ToolProgressSidebar } from '../components/ToolProgressSidebar'
@@ -27,7 +28,9 @@ import {
   type CareerMode,
 } from '../lib/careerTrack'
 import { buzz, celebrate } from '../lib/hubPlay'
+import { shareOrCopyScore } from '../lib/shareScore'
 import { adaptLevelForRole } from '../data/dataStack/adaptLevelForRole'
+import { datasetHint } from '../data/dataStack/gameDatasets'
 import {
   castingChip,
   mutualisEntity,
@@ -104,6 +107,7 @@ function DataStackPageInner() {
   const [meetingQIndex, setMeetingQIndex] = useState(0)
   /** Réponses du joueur pour chaque question de la réunion en cours. */
   const [meetingAnswers, setMeetingAnswers] = useState<number[]>([])
+  const [shareStatus, setShareStatus] = useState<'idle' | 'shared' | 'copied' | 'failed'>('idle')
   const panelHeadingRef = useRef<HTMLHeadingElement>(null)
 
   const roleTrack = progress.playerRole ? trackForRole(progress.playerRole) : 'pm'
@@ -159,7 +163,7 @@ function DataStackPageInner() {
       ? toolsForRole(progress.projectKind, progress.playerRole)
       : []
   const step: AdventureStep | undefined = level.steps[progress.stepIndex]
-  const trapText = step ? (step.trap ?? defaultTrapForTool(step.tool)) : ''
+  const trapText = step ? (step.trap ?? defaultTrapForTool(step.tool, locale)) : ''
   const pm = step?.projectMgmt
   const gov = step?.governance
   const totalStepsInLevel = level.steps.length
@@ -868,7 +872,13 @@ function DataStackPageInner() {
   const briefToolsLine = toolsLine
   const brief = level.brief
   const halfLabel =
-    stepHalf === 'pm' ? t('half.pm') : stepHalf === 'gov' ? t('half.gov') : t('half.tech')
+    stepHalf === 'pm'
+      ? t('half.pm')
+      : stepHalf === 'gov'
+        ? t('half.gov')
+        : stepHalf === 'meeting'
+          ? t('half.meeting')
+          : t('half.tech')
   const careerTitle = titleForScore(progress.career.careerScore, locale)
   const pathRoleLabel =
     progress.projectKind && progress.playerRole
@@ -1245,7 +1255,12 @@ function DataStackPageInner() {
                     <div className="adventure-dataset">
                       <p>
                         <strong>{t('tech.dataset')}</strong>
-                        {step.dataset?.hint ? ` — ${step.dataset.hint}` : ''}
+                        {step.dataset
+                          ? (() => {
+                              const h = datasetHint(step.dataset, locale)
+                              return h ? ` — ${h}` : ''
+                            })()
+                          : ''}
                       </p>
                       <div className="adventure-dataset-actions">
                         {step.dataset && (
@@ -1495,6 +1510,25 @@ function DataStackPageInner() {
                   </strong>
                 </p>
               </div>
+              {progress.levelId === curatedCount() && pathRoleLabel && campaignStory && (
+                <CampaignCertificate
+                  roleLabel={pathRoleLabel}
+                  company={homeCompany.name}
+                  codename={campaignStory.codename}
+                  score={progress.career.careerScore}
+                  title={careerTitle.label}
+                  shareStatus={shareStatus}
+                  onShare={() => {
+                    void shareOrCopyScore({
+                      score: progress.career.careerScore,
+                      title: careerTitle.label,
+                      roleLabel: pathRoleLabel,
+                      company: homeCompany.name,
+                      locale,
+                    }).then((r) => setShareStatus(r))
+                  }}
+                />
+              )}
               <div className="adventure-actions">
                 <button type="button" className="btn adventure-cta" onClick={enterNextLevel}>
                   {t('levelComplete.seeNext')}

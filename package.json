@@ -14,7 +14,9 @@
     "preview": "node ./node_modules/vite/bin/vite.js preview",
     "export:sql": "node ./node_modules/tsx/dist/cli.mjs scripts/exportTsToSql.ts",
     "test": "node ./node_modules/vitest/vitest.mjs run",
-    "test:watch": "node ./node_modules/vitest/vitest.mjs"
+    "test:watch": "node ./node_modules/vitest/vitest.mjs",
+    "test:e2e": "node ./node_modules/@playwright/test/cli.js test",
+    "test:e2e:install": "node ./node_modules/@playwright/test/cli.js install chromium"
   },
   "dependencies": {
     "react": "^19.2.7",
@@ -22,6 +24,7 @@
     "react-router": "8.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

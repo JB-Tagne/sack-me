@@ -157,6 +157,16 @@ const fr: Dict = {
   'levelComplete.titlePrefix': 'Lot terminé — niveau',
   'levelComplete.nextBrief': 'Prochain briefing :',
   'levelComplete.seeNext': 'Voir le briefing suivant',
+  'cert.eyebrow': 'Mutualis Learning',
+  'cert.title': 'Attestation — fondations validées',
+  'cert.body':
+    'Tu as terminé les 6 lots curatés en tant que {role} chez {company} ({codename}). Tu peux enchaîner sur les lots infinis de ta stack.',
+  'cert.score': 'Score carrière',
+  'cert.share': 'Partager mon score',
+  'cert.copied': 'Score copié dans le presse-papiers.',
+  'cert.shared': 'Partage envoyé.',
+  'cert.failed': 'Impossible de partager pour le moment.',
+  'side.mastery': 'Maîtrise stack (moyenne)',
   'nav.back': '← Retour',
   'nav.restart': 'Recommencer au début',
   'nav.restartConfirm':
@@ -368,6 +378,16 @@ const en: Dict = {
   'levelComplete.titlePrefix': 'Batch complete — level',
   'levelComplete.nextBrief': 'Next briefing:',
   'levelComplete.seeNext': 'Open next briefing',
+  'cert.eyebrow': 'Mutualis Learning',
+  'cert.title': 'Certificate — foundations cleared',
+  'cert.body':
+    'You finished the 6 curated batches as {role} at {company} ({codename}). You can continue into endless role-stack batches.',
+  'cert.score': 'Career score',
+  'cert.share': 'Share my score',
+  'cert.copied': 'Score copied to clipboard.',
+  'cert.shared': 'Share sent.',
+  'cert.failed': 'Unable to share right now.',
+  'side.mastery': 'Stack mastery (average)',
   'nav.back': '← Back',
   'nav.restart': 'Restart from scratch',
   'nav.restartConfirm':

@@ -10,7 +10,7 @@ import {
 import { playableToolsForRole } from './roleContent'
 import type { PlayerRoleId, ProjectKind } from './projectPaths'
 import { trackForRole } from './projectPaths'
-import { roleStoryForPhase } from './roleStories'
+import { roleStoryForPhase, type RoleStory } from './roleStories'
 import { toolsForRole } from './roleToolStacks'
 import { phaseLabel, type ToolId } from './tools'
 
@@ -18,7 +18,7 @@ export interface AdaptLevelOpts {
   projectKind: ProjectKind
   playerRole: PlayerRoleId
   locale: PmGameLocale
-  /** Entreprise d’affectation du joueur dans Mutualis Group. */
+  /** Player home company inside Mutualis Group. */
   homeEntity?: MutualisEntityId
 }
 
@@ -44,13 +44,63 @@ function alignCuratedStepPhases(level: AdventureLevel): AdventureLevel['steps'] 
   return level.steps.map((step) => ({ ...step, phase: level.phase }))
 }
 
+/** Keep curated IDs/QCM; flavor each step with role lens + cross-skill note. */
+function flavorCuratedSteps(
+  steps: AdventureLevel['steps'],
+  opts: {
+    story: RoleStory | null
+    playerRole: PlayerRoleId
+    locale: PmGameLocale
+    playable: ToolId[]
+  },
+): AdventureLevel['steps'] {
+  const { story, playerRole, locale, playable } = opts
+  const en = locale === 'en'
+  const playableSet = new Set(playable)
+
+  return steps.map((step) => {
+    const lens = story
+      ? en
+        ? `Role lens (${playerRole}): ${story.tagline}`
+        : `Lunette rôle (${playerRole}) : ${story.tagline}`
+      : ''
+    const crossSkill =
+      step.tool && !playableSet.has(step.tool)
+        ? en
+          ? 'Cross-skill: this tool is outside your daily stack — still required to deliver at Mutualis.'
+          : 'Compétence transverse : cet outil n’est pas ta stack quotidienne — requis pour livrer chez Mutualis.'
+        : ''
+    const say = [lens, step.say, crossSkill].filter(Boolean).join('\n\n')
+    const titleExtra =
+      step.tool && !playableSet.has(step.tool)
+        ? en
+          ? ' · cross-skill'
+          : ' · transverse'
+        : ''
+    return {
+      ...step,
+      title: `${step.title}${titleExtra}`,
+      say,
+    }
+  })
+}
+
 function stepsForRoleLevel(
   level: AdventureLevel,
   playable: ToolId[],
   projectKind: ProjectKind,
   locale: PmGameLocale,
+  story: RoleStory | null,
+  playerRole: PlayerRoleId,
 ): AdventureLevel['steps'] {
-  if (isCuratedLevel(level)) return alignCuratedStepPhases(level)
+  if (isCuratedLevel(level)) {
+    return flavorCuratedSteps(alignCuratedStepPhases(level), {
+      story,
+      playerRole,
+      locale,
+      playable,
+    })
+  }
   if (playable.length === 0) return level.steps
   const roleSteps = buildRoleScopedSteps(
     level.id,
@@ -63,7 +113,7 @@ function stepsForRoleLevel(
 }
 
 function briefProblem(
-  story: ReturnType<typeof roleStoryForPhase>,
+  story: RoleStory | null,
   castProblem: string,
   levelProblem: string,
   lead: MutualisEntity,
@@ -78,7 +128,7 @@ function briefProblem(
   return `${base}\n\n${castProblem}`
 }
 
-/** Adapte intro / brief / outils d’onboarding à l’histoire rôle × projet × filiale. */
+/** Adapts intro / brief / tools to role × project × subsidiary story. */
 export function adaptLevelForRole(
   level: AdventureLevel,
   opts: AdaptLevelOpts,
@@ -98,7 +148,14 @@ export function adaptLevelForRole(
   const lot = lotLabel(level.id, locale)
   const phaseLbl = phaseLabel(level.phase, locale)
 
-  const steps = stepsForRoleLevel(level, playable, projectKind, locale)
+  const steps = stepsForRoleLevel(
+    level,
+    playable,
+    projectKind,
+    locale,
+    story,
+    playerRole,
+  )
   const onboardTools = roleDisplayTools(steps, playable)
   const stepObjectives = steps.map((s) => s.title)
   const problemLine = briefProblem(story, cast.domainProblem, level.brief.problem, cast.lead)

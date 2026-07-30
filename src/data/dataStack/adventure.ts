@@ -153,6 +153,7 @@ export interface AdventureDataset {
   href: string
   label: string
   hint?: string
+  hintEn?: string
 }
 
 /** Briefing type « vrai projet » avant les tâches. */

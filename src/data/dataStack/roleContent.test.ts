@@ -30,20 +30,17 @@ describe('role content adaptation', () => {
     )
   })
 
-  it('keeps curated steps and QCM keys for lots 0–5 when a role is set', () => {
+  it('flavors curated steps with role lens while keeping step ids and QCM', () => {
     const raw = getLevel(0, [], 'fr', 'pm')
-    expect(raw.steps.map((s) => s.id)).toEqual(['l0-open', 'l0-filter', 'l0-sql'])
-
     const adapted = adaptLevelForRole(raw, {
       projectKind: 'it',
-      playerRole: 'business-analyst',
+      playerRole: 'scrum-master',
       locale: 'fr',
-      homeEntity: 'bank',
+      homeEntity: 'retail',
     })
-
     expect(adapted.steps.map((s) => s.id)).toEqual(['l0-open', 'l0-filter', 'l0-sql'])
-    expect(adapted.title).toContain('Lot 1')
-    expect(adapted.tools).toEqual(expect.arrayContaining(['python', 'sql']))
+    expect(adapted.steps[0]!.say).toMatch(/Lunette rôle/)
+    expect(adapted.steps.some((s) => s.title.includes('transverse'))).toBe(true)
     for (const step of adapted.steps) {
       expect(step.projectMgmt?.question?.length).toBeGreaterThan(10)
       expect(step.governance?.question?.length).toBeGreaterThan(10)

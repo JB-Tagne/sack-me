@@ -22,3 +22,15 @@ node_modules/.tmp/
 
 # Local push helpers (machine-specific paths / auth)
 _*.sh
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Python local envs / coverage
+.venv/
+.venv-wsl/
+__pycache__/
+.coverage

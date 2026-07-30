@@ -869,6 +869,10 @@ function DataStackPageInner() {
 
   const phaseLbl = phaseLabel(level.phase, locale)
   const toolsLine = level.tools.map(toolLabel).filter(Boolean).join(' · ')
+  const briefToolsLine =
+    marketStack.length > 0
+      ? marketStack.slice(0, 5).map((t) => t.name).join(' · ')
+      : toolsLine
   const brief = level.brief
   const halfLabel =
     stepHalf === 'pm' ? t('half.pm') : stepHalf === 'gov' ? t('half.gov') : t('half.tech')
@@ -1087,7 +1091,7 @@ function DataStackPageInner() {
                 </div>
 
                 <p className="adventure-brief-meta">
-                  {t('brief.tools')} : <strong>{toolsLine || '—'}</strong>
+                  {t('brief.tools')} : <strong>{briefToolsLine || '—'}</strong>
                   {' · '}
                   {totalStepsInLevel}{' '}
                   {totalStepsInLevel > 1 ? t('brief.tasks_plural') : t('brief.tasks')}

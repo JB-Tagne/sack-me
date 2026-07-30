@@ -30,17 +30,41 @@ describe('role content adaptation', () => {
     )
   })
 
-  it('lists real step tools on the brief (not a collapsed SQL-only intersection)', () => {
+  it('uses role-playable tools and steps on the brief (not generic python/sql only)', () => {
     const raw = getLevel(0, [], 'fr', 'pm')
     expect(raw.tools).toEqual(expect.arrayContaining(['python', 'sql']))
+    const playable = playableToolsForRole('it', 'business-analyst')
     const adapted = adaptLevelForRole(raw, {
       projectKind: 'it',
       playerRole: 'business-analyst',
       locale: 'fr',
       homeEntity: 'bank',
     })
-    expect(adapted.tools).toEqual(expect.arrayContaining(['python', 'sql']))
-    expect(adapted.tools.length).toBeGreaterThanOrEqual(2)
+    expect(adapted.tools).toContain('jira')
+    expect(adapted.steps.length).toBeGreaterThanOrEqual(2)
+    for (const step of adapted.steps) {
+      if (step.tool) {
+        expect(playable).toContain(step.tool)
+      }
+    }
+  })
+
+  it('uses more tasks for data-ai than low-code IT roles when possible', () => {
+    const raw = getLevel(1, [], 'fr', 'pm')
+    const itPm = adaptLevelForRole(raw, {
+      projectKind: 'it',
+      playerRole: 'chef-de-projet',
+      locale: 'fr',
+      homeEntity: 'retail',
+    })
+    const dataAi = adaptLevelForRole(raw, {
+      projectKind: 'data-ai',
+      playerRole: 'data-engineer',
+      locale: 'fr',
+      homeEntity: 'retail',
+    })
+    expect(dataAi.steps.length).toBeGreaterThanOrEqual(itPm.steps.length)
+    expect(dataAi.tools.some((t) => ['python', 'sql', 'spark', 'dbt'].includes(t))).toBe(true)
   })
 
   it('varies Mutualis entity casting by level and home company', () => {

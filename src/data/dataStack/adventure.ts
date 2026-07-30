@@ -985,6 +985,95 @@ function coreCodePool(): PracticeExercise[] {
   return PRACTICE_EXERCISES.filter((e) => CORE_CODE_TOOLS.includes(e.tool))
 }
 
+function exercisePoolForRole(
+  phase: ProjectPhase,
+  preferTools: ToolId[],
+  projectKind: ProjectKind,
+): PracticeExercise[] {
+  const preferSet = new Set(preferTools)
+  const roleScoped = (pool: PracticeExercise[]) => {
+    const hit = pool.filter((ex) => preferSet.has(ex.tool))
+    return hit.length > 0 ? hit : pool
+  }
+
+  const corePool = coreCodePool()
+  const codePool = codePracticePool()
+  const phasePool = exercisesForPhase(phase)
+
+  if (projectKind === 'data-ai') {
+    const dataPool = roleScoped(
+      corePool.filter((ex) => preferSet.has(ex.tool)).length > 0
+        ? corePool.filter((ex) => preferSet.has(ex.tool))
+        : corePool.length > 0
+          ? corePool
+          : codePool,
+    )
+    const ranked = rankExercises(
+      dataPool.length > 0 ? dataPool : PRACTICE_EXERCISES.filter((e) => preferSet.has(e.tool)),
+      preferTools,
+    )
+    return ranked.length > 0 ? ranked : rankExercises(PRACTICE_EXERCISES, preferTools)
+  }
+
+  const platformPool = roleScoped(phasePool.filter((ex) => !isCodeFocusTool(ex.tool)))
+  const codeRolePool = roleScoped(codePool.filter((ex) => preferSet.has(ex.tool)))
+  const combined = [
+    ...rankExercises(platformPool, preferTools),
+    ...rankExercises(codeRolePool, preferTools),
+  ]
+  const uniq: PracticeExercise[] = []
+  const seen = new Set<string>()
+  for (const ex of combined) {
+    if (seen.has(ex.id)) continue
+    seen.add(ex.id)
+    uniq.push(ex)
+  }
+  if (uniq.length > 0) return uniq
+  return rankExercises(
+    roleScoped(PRACTICE_EXERCISES.filter((e) => preferSet.has(e.tool))),
+    preferTools,
+  )
+}
+
+/** Curated/endless levels: pick hands-on steps from the role playable stack. */
+export function buildRoleScopedSteps(
+  levelId: number,
+  phase: ProjectPhase,
+  preferTools: ToolId[],
+  projectKind: ProjectKind,
+  locale: PmGameLocale = 'fr',
+): AdventureStep[] {
+  const pool = exercisePoolForRole(phase, preferTools, projectKind)
+  if (pool.length === 0) return []
+
+  const codePlayable = preferTools.filter((id) => isCodeFocusTool(id)).length
+  const stepCount =
+    projectKind === 'data-ai'
+      ? Math.min(3, pool.length)
+      : codePlayable >= 2
+        ? Math.min(3, pool.length)
+        : Math.min(2, pool.length)
+
+  const offset =
+    (levelId * 7 + (projectKind === 'data-ai' ? 3 : 0) + preferTools.length) %
+    Math.max(1, pool.length)
+  const picked: PracticeExercise[] = []
+  const used = new Set<string>()
+  for (let i = 0; i < stepCount; i++) {
+    let ex = pool[(offset + i) % pool.length]!
+    if (used.has(ex.id)) {
+      ex = pool.find((e) => !used.has(e.id)) ?? ex
+    }
+    used.add(ex.id)
+    picked.push(ex)
+  }
+
+  const intensity = levelId
+  return picked
+    .flatMap((ex) => exerciseToSteps(ex, intensity))
+    .map((s) => enrichStep(s, intensity, locale))
+}
+
 export function buildEndlessLevel(
   levelId: number,
   preferTools: ToolId[] = [],

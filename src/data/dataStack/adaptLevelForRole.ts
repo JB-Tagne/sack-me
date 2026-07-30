@@ -1,5 +1,5 @@
 import type { PmGameLocale } from '../../i18n/pmGameLocale'
-import type { AdventureLevel } from './adventure'
+import { buildRoleScopedSteps, type AdventureLevel } from './adventure'
 import {
   castingChip,
   rebrandMutualisCopy,
@@ -21,6 +21,16 @@ export interface AdaptLevelOpts {
   homeEntity?: MutualisEntityId
 }
 
+function roleDisplayTools(
+  playable: ToolId[],
+  steps: AdventureLevel['steps'],
+): ToolId[] {
+  const fromSteps = [
+    ...new Set(steps.map((s) => s.tool).filter((id): id is ToolId => Boolean(id))),
+  ]
+  return [...new Set([...playable.slice(0, 5), ...fromSteps])].slice(0, 6) as ToolId[]
+}
+
 /** Adapte intro / brief / outils d’onboarding à l’histoire rôle × projet × filiale. */
 export function adaptLevelForRole(
   level: AdventureLevel,
@@ -39,22 +49,12 @@ export function adaptLevelForRole(
   const marketStack = toolsForRole(projectKind, playerRole)
   const stackLine = marketStack.map((t) => t.name).join(' · ')
 
-  const fromSteps = [
-    ...new Set(
-      level.steps
-        .map((s) => s.tool)
-        .filter((id): id is ToolId => Boolean(id)),
-    ),
-  ]
-  const intersection = level.tools.filter((t) => playable.includes(t))
-  const onboardTools: ToolId[] =
-    fromSteps.length > 0
-      ? fromSteps
-      : intersection.length > 0
-        ? intersection
-        : playable.length > 0
-          ? playable.slice(0, Math.min(4, playable.length))
-          : level.tools
+  const roleSteps =
+    playable.length > 0
+      ? buildRoleScopedSteps(level.id, level.phase, playable, projectKind, locale)
+      : []
+  const steps = roleSteps.length > 0 ? roleSteps : level.steps
+  const onboardTools = roleDisplayTools(playable, steps)
 
   const consigne =
     track === 'governance'
@@ -65,10 +65,15 @@ export function adaptLevelForRole(
         ? 'Before each hands-on: project-management decision question → then situational practice on your role stack + data DoD.'
         : 'Avant chaque manipulation : question de gestion de projet → puis mise en situation et pratique sur ta stack de rôle + DoD data.'
 
+  const basePatch = {
+    steps,
+    tools: onboardTools,
+  }
+
   if (!story) {
     return {
       ...level,
-      tools: onboardTools,
+      ...basePatch,
       brief: {
         ...level.brief,
         consigne,
@@ -89,6 +94,7 @@ export function adaptLevelForRole(
 
   return {
     ...level,
+    ...basePatch,
     title: `${story.codename} · ${cast.lead.name}`,
     intro: en
       ? `${castingChip(cast, locale)}. ${rebrandMutualisCopy(story.tagline, cast.lead)} Scope: ${story.scope}. Stack: ${stackLine}. ${phaseLabelBit}`
@@ -100,6 +106,5 @@ export function adaptLevelForRole(
       objectives,
       consigne,
     },
-    tools: onboardTools,
   }
 }

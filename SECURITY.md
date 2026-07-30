@@ -22,8 +22,6 @@ Envoie un message privé au mainteneur du dépôt (onglet Security → Advisorie
 
 Ne joins jamais de mots de passe ou clés API réelles dans les tickets.
 
-Les identifiants locaux de démo (`sackme` / `sackme`) ne doivent **pas** être utilisés en production.
-
 ---
 
 ## English
@@ -43,5 +41,3 @@ Contact the repository maintainer privately (GitHub Security → Advisories when
 - affected version / commit
 
 Never attach real passwords or API keys to tickets.
-
-Local demo credentials (`sackme` / `sackme`) must **not** be used in production.

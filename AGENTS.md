@@ -2,10 +2,9 @@
 
 ## Game content
 
-- Subsidiaries: `data/catalog/entities.yaml` → `python scripts/sync_game_content.py --write`
-- Consistency check: `python scripts/sync_game_content.py --check`
-- TS → SQL export: `npm run export:sql` then `python scripts/apply_ts_sql.py`
-- See `.cursor/rules/sync-game-content.mdc`
+- Source of truth: TypeScript modules under `src/data/dataStack/`
+- Subsidiaries: `src/data/dataStack/mutualisEntities.ts`
+- See `src/data/dataStack/README.md`
 
 ## Language
 

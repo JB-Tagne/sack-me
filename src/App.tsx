@@ -1,21 +1,28 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { ConfettiBurst } from './components/ConfettiBurst'
-import { DataStackPage } from './pages/DataStackPage'
 
-/**
- * HashRouter works in Streamlit srcdoc iframes (BrowserRouter breaks on about:srcdoc).
- * Eager import keeps a single IIFE bundle without dynamic import().
- */
+const DataStackPage = lazy(() =>
+  import('./pages/DataStackPage').then((m) => ({ default: m.DataStackPage })),
+)
+
 export default function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <ConfettiBurst />
       <Routes>
-        <Route path="/" element={<DataStackPage />} />
+        <Route
+          path="/"
+          element={
+            <Suspense fallback={<p className="page-loading">Sack Me!…</p>}>
+              <DataStackPage />
+            </Suspense>
+          }
+        />
         <Route path="/pm-game" element={<Navigate to="/" replace />} />
         <Route path="/sack-me" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   )
 }

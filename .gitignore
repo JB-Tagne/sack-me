@@ -1,16 +1,9 @@
 # Dependencies
 node_modules/
-.venv/
-.venv-wsl/
-__pycache__/
-*.pyc
 
 # Build
 dist/
 *.local
-# streamlit_static/ is committed (CDN source for Streamlit Cloud)
-!streamlit_static/
-!streamlit_static/**
 
 # Editor / OS
 .DS_Store
@@ -22,24 +15,10 @@ Thumbs.db
 *.tsbuildinfo
 node_modules/.tmp/
 
-# Env
+# Local env (never commit secrets)
 .env
 .env.*
 !.env.example
 
-# Streamlit secrets (ne jamais committer)
-.streamlit/secrets.toml
-
-# Python tooling
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-*.egg-info/
-.coverage
-htmlcov/
-
 # Local push helpers (machine-specific paths / auth)
-scripts/push_only.sh
-scripts/push_ci.sh
-scripts/push_streamlit.sh
 _*.sh

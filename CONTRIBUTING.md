@@ -10,44 +10,35 @@ Merci de contribuer à **Sack Me!**
 
 ### Prérequis
 
-- Python 3.11+
-- PostgreSQL 16 (Docker recommandé : `docker compose up -d`) — optionnel pour Streamlit démo
+- Node.js 20+
 
 ### Installation
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate   # Windows : .\.venv\Scripts\activate
-pip install -r requirements.txt -r requirements-dev.txt
-cp .env.example .env
-streamlit run streamlit_app.py
-# → http://localhost:8501
+npm install
+npm run dev
+# → http://localhost:5173
 ```
 
 ### Avant une PR
 
 1. Branche dédiée depuis `main`
-2. Contenu jeu : éditer `data/catalog/entities.yaml` puis `python scripts/sync_game_content.py --write`
-3. Installer les hooks :
+2. Contenu jeu : éditer les modules sous `src/data/dataStack/`
+3. Checks locaux :
    ```bash
-   pre-commit install
-   pre-commit install --hook-type pre-push
-   pre-commit install --hook-type commit-msg
+   npm test
+   npm run build
    ```
-4. Checks locaux : `bash scripts/run_all_checks.sh`
-5. **Messages de commit GitHub en anglais uniquement** (impératif : `Add…` / `Fix…` / `Update…`)
-6. Ne committe **jamais** `.env`, `.streamlit/secrets.toml`, secrets
+4. **Messages de commit GitHub en anglais uniquement** (impératif : `Add…` / `Fix…` / `Update…`)
 
 ### Contenu de jeu
 
-- UI live : [`streamlit_app.py`](streamlit_app.py)
-- CLI : [`app.py`](app.py)
-- Schéma / seed : [`sql/`](sql/)
-- Fallback démo : [`demo_content.py`](demo_content.py)
+- Source de vérité : [`src/data/dataStack/`](src/data/dataStack/)
+- Filiales : [`mutualisEntities.ts`](src/data/dataStack/mutualisEntities.ts)
 
 ### Signalement de bugs
 
-Issue avec : OS, Python, étapes, logs (sans secrets).
+Issue avec : OS, navigateur, étapes de reproduction, logs console (sans secrets).
 
 ---
 
@@ -57,41 +48,32 @@ Thanks for contributing to **Sack Me!**
 
 ### Prerequisites
 
-- Python 3.11+
-- PostgreSQL 16 (Docker recommended) — optional for Streamlit demo mode
+- Node.js 20+
 
 ### Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate   # Windows: .\.venv\Scripts\activate
-pip install -r requirements.txt -r requirements-dev.txt
-cp .env.example .env
-streamlit run streamlit_app.py
-# → http://localhost:8501
+npm install
+npm run dev
+# → http://localhost:5173
 ```
 
 ### Before a PR
 
 1. Feature branch from `main`
-2. Game content: edit `data/catalog/entities.yaml` then `python scripts/sync_game_content.py --write`
-3. Install hooks:
+2. Game content: edit modules under `src/data/dataStack/`
+3. Local checks:
    ```bash
-   pre-commit install
-   pre-commit install --hook-type pre-push
-   pre-commit install --hook-type commit-msg
+   npm test
+   npm run build
    ```
-4. Local checks: `bash scripts/run_all_checks.sh`
-5. **GitHub commit messages must be English only** (imperative: `Add…` / `Fix…` / `Update…`)
-6. Never commit `.env`, `.streamlit/secrets.toml`, or secrets
+4. **GitHub commit messages must be English only** (imperative: `Add…` / `Fix…` / `Update…`)
 
 ### Game content
 
-- Live UI: [`streamlit_app.py`](streamlit_app.py)
-- CLI: [`app.py`](app.py)
-- Schema / seed: [`sql/`](sql/)
-- Demo fallback: [`demo_content.py`](demo_content.py)
+- Source of truth: [`src/data/dataStack/`](src/data/dataStack/)
+- Subsidiaries: [`mutualisEntities.ts`](src/data/dataStack/mutualisEntities.ts)
 
 ### Bug reports
 
-Issue with: OS, Python, repro steps, logs (no secrets).
+Issue with: OS, browser, repro steps, console logs (no secrets).

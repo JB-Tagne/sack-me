@@ -1,13 +1,17 @@
-# Sack Me! — CI on every push & pull request
+# Sack Me! — CI on main pushes and all pull requests
 name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   NODE_VERSION: "20"
@@ -18,15 +22,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+
       - run: npm ci
+
       - run: npm test
+
       - name: Export TS tables to SQL
         run: npm run export:sql
+
+      - name: Verify SQL export is committed
+        run: |
+          if ! git diff --quiet -- sql/seed_from_ts.sql; then
+            echo "::error::sql/seed_from_ts.sql is out of date. Run npm run export:sql and commit the result."
+            git --no-pager diff -- sql/seed_from_ts.sql
+            exit 1
+          fi
+
       - run: npm run build
+
       - run: npm audit --audit-level=high
 
   gate:

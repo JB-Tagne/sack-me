@@ -23,8 +23,8 @@ export function PmGameLanding({ initialDisplayName = '', onChoose }: PmGameLandi
     if (!parsed) {
       setError(
         locale === 'en'
-          ? 'Enter your player name as First Last (e.g. Alex Martin). No email needed.'
-          : 'Saisis ton pseudo au format Prénom Nom (ex. Alex Martin). Pas besoin d’e-mail.',
+          ? 'Enter your player name as First Last (e.g. Alex Martin).'
+          : 'Saisis ton pseudo au format Prénom Nom (ex. Alex Martin).',
       )
       return
     }
@@ -62,7 +62,7 @@ export function PmGameLanding({ initialDisplayName = '', onChoose }: PmGameLandi
           Pseudo joueur / Player name
         </label>
         <p className="pm-landing-name-hint" id={`${nameId}-hint`}>
-          Format : Prénom Nom · First Last — pas d’e-mail / no email
+          Format : Prénom Nom · First Last
         </p>
         <input
           id={nameId}

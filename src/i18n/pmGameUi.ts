@@ -39,9 +39,9 @@ const fr: Dict = {
     'Sack Me!, le jeu d’aventure orienté gestion de projet et gouvernance. Tu choisis un rôle. Tu mènes à bien les tâches qui te sont confiées et tu évolues. Toute mauvaise décision te rapproche de la sortie.',
   'landing.continue': 'Continuer',
   'landing.nameLabel': 'Pseudo joueur (Prénom Nom)',
-  'landing.nameHint': 'Format Prénom Nom — pas besoin d’adresse e-mail.',
+  'landing.nameHint': 'Format Prénom Nom.',
   'landing.nameError':
-    'Saisis ton pseudo au format Prénom Nom (ex. Alex Martin). Pas besoin d’e-mail.',
+    'Saisis ton pseudo au format Prénom Nom (ex. Alex Martin).',
   'welcome.title': 'Bienvenue chez Mutualis Group, {firstName}',
   'cast.chip': 'Casting du lot',
   'cast.step': 'Filiales sur cette tâche',
@@ -265,9 +265,9 @@ const en: Dict = {
     'Sack Me! is an adventure game focused on project management and governance. You choose a role. You complete the tasks assigned to you and grow in your career. Every bad decision brings you closer to the exit.',
   'landing.continue': 'Continue',
   'landing.nameLabel': 'Player name (First Last)',
-  'landing.nameHint': 'Format First Last — no email required.',
+  'landing.nameHint': 'Format First Last.',
   'landing.nameError':
-    'Enter your player name as First Last (e.g. Alex Martin). No email needed.',
+    'Enter your player name as First Last (e.g. Alex Martin).',
   'welcome.title': 'Welcome to Mutualis Group, {firstName}',
   'cast.chip': 'Exercise cast',
   'cast.step': 'Entities on this task',

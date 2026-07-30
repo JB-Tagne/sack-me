@@ -40,13 +40,17 @@ function isCuratedLevel(level: AdventureLevel): boolean {
   return !level.endless && level.id >= 0 && level.id < curatedCount()
 }
 
+function alignCuratedStepPhases(level: AdventureLevel): AdventureLevel['steps'] {
+  return level.steps.map((step) => ({ ...step, phase: level.phase }))
+}
+
 function stepsForRoleLevel(
   level: AdventureLevel,
   playable: ToolId[],
   projectKind: ProjectKind,
   locale: PmGameLocale,
 ): AdventureLevel['steps'] {
-  if (isCuratedLevel(level)) return level.steps
+  if (isCuratedLevel(level)) return alignCuratedStepPhases(level)
   if (playable.length === 0) return level.steps
   const roleSteps = buildRoleScopedSteps(
     level.id,
@@ -61,12 +65,17 @@ function stepsForRoleLevel(
 function briefProblem(
   story: ReturnType<typeof roleStoryForPhase>,
   castProblem: string,
+  levelProblem: string,
   lead: MutualisEntity,
 ): string {
-  if (!story) return castProblem
-  const narrative = rebrandMutualisCopy(story.problem, lead)
-  if (narrative === castProblem) return narrative
-  return `${narrative}\n\n${castProblem}`
+  if (story) {
+    const narrative = rebrandMutualisCopy(story.problem, lead)
+    if (narrative === castProblem) return narrative
+    return `${narrative}\n\n${castProblem}`
+  }
+  const base = rebrandMutualisCopy(levelProblem, lead)
+  if (base === castProblem || !castProblem) return base
+  return `${base}\n\n${castProblem}`
 }
 
 /** Adapte intro / brief / outils d’onboarding à l’histoire rôle × projet × filiale. */
@@ -92,7 +101,7 @@ export function adaptLevelForRole(
   const steps = stepsForRoleLevel(level, playable, projectKind, locale)
   const onboardTools = roleDisplayTools(steps, playable)
   const stepObjectives = steps.map((s) => s.title)
-  const problemLine = briefProblem(story, cast.domainProblem, cast.lead)
+  const problemLine = briefProblem(story, cast.domainProblem, level.brief.problem, cast.lead)
 
   const consigne =
     track === 'governance'

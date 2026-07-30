@@ -63,6 +63,20 @@ describe('role content adaptation', () => {
 
     expect(adapted.steps.every((s) => s.id.startsWith('e6-'))).toBe(true)
     expect(adapted.steps.length).toBeGreaterThanOrEqual(2)
+    const tools = adapted.steps.map((s) => s.tool).filter(Boolean)
+    expect(new Set(tools).size).toBe(tools.length)
+  })
+
+  it('aligns curated step phases with batch phase', () => {
+    const adapted = adaptLevelForRole(getLevel(4, [], 'fr', 'pm'), {
+      projectKind: 'data-ai',
+      playerRole: 'data-steward',
+      locale: 'fr',
+      homeEntity: 'retail',
+    })
+    for (const step of adapted.steps) {
+      expect(step.phase).toBe('gouvernance')
+    }
   })
 
   it('varies curated step sets across lots 0–5', () => {

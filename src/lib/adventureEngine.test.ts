@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AdventureStep } from '../data/dataStack/adventure'
-import { curatedCount, getLevel } from '../data/dataStack/adventure'
+import { curatedCount, getLevel, globalAdventureStepIndex, stepsInLevel } from '../data/dataStack/adventure'
 import { evaluateStep } from './adventureEngine'
 import { resolveResumePhase, type AdventureProgress } from './adventureStorage'
 
@@ -188,6 +188,8 @@ describe('getLevel', () => {
     expect(curatedCount()).toBe(6)
     expect(getLevel(0).id).toBe(0)
     expect(getLevel(5).endless).toBeUndefined()
+    expect(stepsInLevel(0)).toBe(3)
+    expect(globalAdventureStepIndex(1, 0)).toBe(stepsInLevel(0))
   })
 
   it('builds endless levels after curated', () => {

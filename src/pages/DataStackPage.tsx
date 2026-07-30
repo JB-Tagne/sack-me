@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { DeliverablePad } from '../components/DeliverablePad'
 import { ToolOnboardingPanel } from '../components/ToolOnboardingPanel'
 import { ToolProgressSidebar } from '../components/ToolProgressSidebar'
-import { curatedCount, defaultTrapForTool, getLevel, type AdventureStep } from '../data/dataStack/adventure'
+import { curatedCount, defaultTrapForTool, getLevel, globalAdventureStepIndex, type AdventureStep } from '../data/dataStack/adventure'
 import { onboardingForTools } from '../data/dataStack/toolOnboarding'
 import { phaseLabel, STACK_TOOLS, type ToolId } from '../data/dataStack/tools'
 import { evaluateStep, type StepEval, type StepSubmission } from '../lib/adventureEngine'
@@ -448,12 +448,8 @@ function DataStackPageInner() {
     return s?.projectMgmt ? 'pm' : 'tech'
   }
 
-  /**
-   * Calcule l'index de step global (tous niveaux confondus) pour l'injection
-   * de réunions périodiques. On approxime via levelId * 8 + stepIndex.
-   */
   function globalStepIndex(p: AdventureProgress = progress): number {
-    return p.levelId * 8 + p.stepIndex
+    return globalAdventureStepIndex(p.levelId, p.stepIndex)
   }
 
   /** Lance une réunion et bloque l'UI jusqu'à la fin des 5 questions. */

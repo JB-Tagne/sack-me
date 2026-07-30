@@ -192,7 +192,20 @@ export interface AdventureLevel {
 const DS = GAME_DATASETS
 
 /** Task count per curated lot (0–5) — varies the brief meta line. */
-export const CURATED_STEP_COUNTS: readonly number[] = [2, 3, 2, 3, 3, 2]
+/** Per-level step counts for curated lots 0–5 (used for meeting cadence). */
+export function stepsInLevel(levelId: number): number {
+  const curated = CURATED.find((l) => l.id === levelId)
+  return curated?.steps.length ?? 2
+}
+
+/** Cumulative step index across batches (curated counts exact; endless assumes 2 steps). */
+export function globalAdventureStepIndex(levelId: number, stepIndex: number): number {
+  let prior = 0
+  for (let id = 0; id < levelId; id++) {
+    prior += stepsInLevel(id)
+  }
+  return prior + stepIndex
+}
 
 const CURATED: AdventureLevel[] = [
   {
@@ -421,7 +434,7 @@ const CURATED: AdventureLevel[] = [
       consigne: 'Télécharge le CSV, écris la requête SQL complète, colle-la dans le notebook.',
     },
     phase: 'ingestion',
-    tools: ['sql', 'bigquery'],
+    tools: ['sql'],
     steps: [
       {
         id: 'l2-sql',
@@ -527,7 +540,7 @@ const CURATED: AdventureLevel[] = [
         feedbackFail: 'Il me faut une clause OVER (… PARTITION BY …).',
         correction:
           '```sql\nSELECT store_name, quarterhour, turnover_weight,\n       SUM(turnover_weight) OVER (\n         PARTITION BY store_name ORDER BY quarterhour\n       ) AS running_weight,\n       RANK() OVER (\n         PARTITION BY store_name ORDER BY turnover_weight DESC\n       ) AS rnk\nFROM weights_turnover_sample;\n```',
-        tool: 'bigquery',
+        tool: 'sql',
         phase: 'ingestion',
       },
     ],
@@ -732,7 +745,7 @@ const CURATED: AdventureLevel[] = [
         correction:
           '```python\nimport pandas as pd\ncap = pd.read_csv("capteur_a_retail.csv")\nw = pd.read_csv("weights_turnover_sample.csv")\nby_store = w.groupby("store_name", as_index=False)["turnover_weight"].sum()\n# capteur = trafic journalier global (pas de store_name) — pas de merge direct\nprint(by_store.head())\nprint(cap[["date", "visiteurs_count"]].head())\n```',
         tool: 'python',
-        phase: 'exposition',
+        phase: 'gouvernance',
       },
       {
         id: 'l4-pbi',
@@ -758,7 +771,7 @@ const CURATED: AdventureLevel[] = [
         correction:
           'Intensité CA = SUM(weights[turnover_weight]) — doit matcher la requête l4-kpi-sql.',
         tool: 'powerbi',
-        phase: 'exposition',
+        phase: 'gouvernance',
       },
     ],
   },
@@ -882,7 +895,11 @@ function datasetForTool(tool: ToolId): AdventureDataset | undefined {
 }
 
 /** Endless : 1 étape = mise en situation + livrable à manipuler (décision PM/gov ajoutée à l’enrichissement). */
-function exerciseToSteps(ex: PracticeExercise, intensity: number): AdventureStep[] {
+function exerciseToSteps(
+  ex: PracticeExercise,
+  intensity: number,
+  levelPhase?: ProjectPhase,
+): AdventureStep[] {
   const prefix = `e${intensity}-${ex.id}`
   const expect = expectForTool(ex.tool)
   const situation = `Situation Mutualis — ${ex.context}`
@@ -938,7 +955,7 @@ function exerciseToSteps(ex: PracticeExercise, intensity: number): AdventureStep
           : 'Enrichis le livrable : montre concrètement ce que tu as manipulé dans l’outil.',
       correction: ex.modelSolution,
       tool: ex.tool,
-      phase: phaseOfTool(ex.tool),
+      phase: levelPhase ?? phaseOfTool(ex.tool),
       // Placeholders : enrichStep injecte les vrais packs PM + gouvernance
       projectMgmt: undefined,
       governance: undefined,
@@ -1062,11 +1079,12 @@ function pickRoleExercises(
     let found: PracticeExercise | undefined
     for (let j = 0; j < pool.length; j++) {
       const ex = pool[(start + n * 7 + j) % pool.length]!
-      if (used.has(ex.id)) continue
-      if (!usedTools.has(ex.tool) || n === stepCount - 1) {
-        found = ex
-        break
-      }
+      if (used.has(ex.id) || usedTools.has(ex.tool)) continue
+      found = ex
+      break
+    }
+    if (!found) {
+      found = pool.find((ex) => !used.has(ex.id) && !usedTools.has(ex.tool))
     }
     if (!found) {
       found = pool.find((ex) => !used.has(ex.id))
@@ -1081,14 +1099,11 @@ function pickRoleExercises(
 }
 
 function stepCountForLevel(
-  levelId: number,
+  _levelId: number,
   projectKind: ProjectKind,
   codePlayable: number,
   poolLength: number,
 ): number {
-  if (levelId >= 0 && levelId < CURATED_STEP_COUNTS.length) {
-    return Math.min(CURATED_STEP_COUNTS[levelId]!, poolLength)
-  }
   if (projectKind === 'data-ai') return Math.min(3, poolLength)
   if (codePlayable >= 2) return Math.min(3, poolLength)
   return Math.min(2, poolLength)
@@ -1111,7 +1126,7 @@ export function buildRoleScopedSteps(
 
   const intensity = levelId
   return picked
-    .flatMap((ex) => exerciseToSteps(ex, intensity))
+    .flatMap((ex) => exerciseToSteps(ex, intensity, phase))
     .map((s) => enrichStep(s, intensity, locale))
 }
 
@@ -1182,7 +1197,10 @@ export function buildEndlessLevel(
       primaryPool[(levelId * 3 + 1) % primaryPool.length]!
   }
 
-  const steps = [...exerciseToSteps(a, intensity), ...exerciseToSteps(b, intensity)]
+  const steps = [
+    ...exerciseToSteps(a, intensity, phase),
+    ...exerciseToSteps(b, intensity, phase),
+  ]
   const toolNames = [...new Set(steps.map((s) => s.tool).filter(Boolean) as ToolId[])].map(
     toolName,
   )

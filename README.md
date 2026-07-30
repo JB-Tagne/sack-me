@@ -51,11 +51,13 @@ npm run preview
 
 ### Contenu MVP
 
-- 8 filiales Mutualis + 2 types de projet (IT / Data-IA)
-- 9 rôles (piste PM ou Gouvernance)
-- 6 lots curatés (SQL/Python → ops), puis lots infinis par rôle
-- 9 rôles (piste PM ou Gouvernance) — lots 0–5 : étapes scriptées + QCM dédiés ; lot 6+ : exercices stack rôle
+- 8 filiales Mutualis · 2 types de projet (IT / Data-IA) · 9 rôles (PM ou Gouvernance)
+- **Lots 0–5** : parcours scripté (SQL, Python, dbt, Airflow…) + QCM PM/gouvernance dédiés par étape
+- **Lot 6+** : exercices tirés de la stack jouable du rôle (outils distincts par lot quand possible)
+- Brief : enjeu rôle + contexte filiale · phases alignées sur le lot
 - `fireRisk` : trop d’erreurs → COMEX / licenciement
+
+**Jouer en ligne :** [https://jb-tagne.github.io/sack-me/](https://jb-tagne.github.io/sack-me/)
 
 ### Contenu de jeu (tables SQL)
 
@@ -153,11 +155,13 @@ npm run preview
 
 ### MVP content
 
-- 8 Mutualis subsidiaries + 2 project kinds (IT / Data-AI)
-- 9 roles (PM or Governance track)
-- 6 curated batches (SQL/Python → ops), then endless role-scoped batches
-- 9 roles (PM or Governance track) — batches 0–5: scripted steps + curated QCM; batch 6+: role-stack exercises
+- 8 Mutualis subsidiaries · 2 project kinds (IT / Data-AI) · 9 roles (PM or Governance)
+- **Batches 0–5**: scripted path (SQL, Python, dbt, Airflow…) + dedicated PM/governance QCM per step
+- **Batch 6+**: exercises from the role playable stack (distinct tools per batch when possible)
+- Brief: role stakes + subsidiary context · phases aligned with the batch
 - `fireRisk`: too many mistakes → exec committee / fired
+
+**Play online:** [https://jb-tagne.github.io/sack-me/](https://jb-tagne.github.io/sack-me/)
 
 ### Game content (SQL tables)
 

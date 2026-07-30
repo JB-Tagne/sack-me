@@ -2,8 +2,11 @@
 
 ## Game content
 
-- Source of truth: TypeScript modules under `src/data/dataStack/`
-- Subsidiaries: `src/data/dataStack/mutualisEntities.ts`
+- SQL schema: `sql/schema.sql`
+- SQL seed (MVP): `sql/seed.sql`
+- Full content export: `npm run export:sql` → `sql/seed_from_ts.sql`
+- Migrations: `sql/migrations/`
+- TS mirror (React runtime): `src/data/dataStack/`
 - See `src/data/dataStack/README.md`
 
 ## Language

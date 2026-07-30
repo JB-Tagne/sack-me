@@ -48,6 +48,27 @@ npm run preview
 - 2 niveaux, 4 étapes (QCM PM → livrable tech → QCM gouvernance)
 - `fireRisk` : trop d’erreurs → COMEX / licenciement
 
+### Contenu de jeu (tables SQL)
+
+Toutes les tables sont définies dans [`sql/schema.sql`](sql/schema.sql) et alimentées par :
+
+| Fichier | Rôle |
+|---------|------|
+| [`sql/schema.sql`](sql/schema.sql) | DDL — 18 tables PostgreSQL |
+| [`sql/seed.sql`](sql/seed.sql) | Seed MVP (référentiels de base) |
+| [`sql/seed_from_ts.sql`](sql/seed_from_ts.sql) | Contenu complet exporté depuis le TS |
+| [`sql/migrations/`](sql/migrations/) | Migrations incrémentales |
+
+Régénérer le seed depuis le TypeScript :
+
+```bash
+npm run export:sql
+```
+
+Tables principales : `entities`, `roles`, `tools`, `adventure_levels`, `adventure_steps`, `step_questions`, `meetings`, `meeting_questions`, `content_packs`, `game_datasets`, `players`, etc.
+
+Le jeu React lit encore les modules `src/data/dataStack/*.ts` à l'exécution ; garde TS et SQL synchronisés via `export:sql`.
+
 ### Tests & qualité
 
 ```bash
@@ -107,6 +128,27 @@ npm run preview
 - 9 roles (PM or Governance track)
 - 2 levels, 4 steps (PM quiz → tech deliverable → governance quiz)
 - `fireRisk`: too many mistakes → exec committee / fired
+
+### Game content (SQL tables)
+
+All tables are defined in [`sql/schema.sql`](sql/schema.sql) and populated by:
+
+| File | Role |
+|------|------|
+| [`sql/schema.sql`](sql/schema.sql) | DDL — 18 PostgreSQL tables |
+| [`sql/seed.sql`](sql/seed.sql) | MVP seed (base reference data) |
+| [`sql/seed_from_ts.sql`](sql/seed_from_ts.sql) | Full content exported from TS |
+| [`sql/migrations/`](sql/migrations/) | Incremental migrations |
+
+Regenerate seed from TypeScript:
+
+```bash
+npm run export:sql
+```
+
+Main tables: `entities`, `roles`, `tools`, `adventure_levels`, `adventure_steps`, `step_questions`, `meetings`, `meeting_questions`, `content_packs`, `game_datasets`, `players`, etc.
+
+The React game still imports `src/data/dataStack/*.ts` at runtime; keep TS and SQL in sync via `export:sql`.
 
 ### Tests & quality
 

@@ -53,7 +53,8 @@ npm run preview
 
 - 8 filiales Mutualis + 2 types de projet (IT / Data-IA)
 - 9 rôles (piste PM ou Gouvernance)
-- 2 niveaux, 4 étapes (QCM PM → livrable tech → QCM gouvernance)
+- 6 lots curatés (SQL/Python → ops), puis lots infinis par rôle
+- 9 rôles (piste PM ou Gouvernance) — lots 0–5 : étapes scriptées + QCM dédiés ; lot 6+ : exercices stack rôle
 - `fireRisk` : trop d’erreurs → COMEX / licenciement
 
 ### Contenu de jeu (tables SQL)
@@ -154,7 +155,8 @@ npm run preview
 
 - 8 Mutualis subsidiaries + 2 project kinds (IT / Data-AI)
 - 9 roles (PM or Governance track)
-- 2 levels, 4 steps (PM quiz → tech deliverable → governance quiz)
+- 6 curated batches (SQL/Python → ops), then endless role-scoped batches
+- 9 roles (PM or Governance track) — batches 0–5: scripted steps + curated QCM; batch 6+: role-stack exercises
 - `fireRisk`: too many mistakes → exec committee / fired
 
 ### Game content (SQL tables)

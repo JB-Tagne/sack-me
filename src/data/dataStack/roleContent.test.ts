@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { adaptLevelForRole } from './adaptLevelForRole'
-import { getLevel } from './adventure'
+import { curatedCount, getLevel } from './adventure'
 import {
   MUTUALIS_ENTITIES,
   resolveExerciseCasting,
@@ -30,65 +30,58 @@ describe('role content adaptation', () => {
     )
   })
 
-  it('uses role-playable tools and steps on the brief (not generic python/sql only)', () => {
+  it('keeps curated steps and QCM keys for lots 0–5 when a role is set', () => {
     const raw = getLevel(0, [], 'fr', 'pm')
-    expect(raw.tools).toEqual(expect.arrayContaining(['python', 'sql']))
-    const playable = playableToolsForRole('it', 'business-analyst')
+    expect(raw.steps.map((s) => s.id)).toEqual(['l0-open', 'l0-filter', 'l0-sql'])
+
     const adapted = adaptLevelForRole(raw, {
       projectKind: 'it',
       playerRole: 'business-analyst',
       locale: 'fr',
       homeEntity: 'bank',
     })
-    expect(adapted.steps.length).toBe(2)
+
+    expect(adapted.steps.map((s) => s.id)).toEqual(['l0-open', 'l0-filter', 'l0-sql'])
     expect(adapted.title).toContain('Lot 1')
-    expect(adapted.tools.length).toBeGreaterThan(0)
+    expect(adapted.tools).toEqual(expect.arrayContaining(['python', 'sql']))
     for (const step of adapted.steps) {
-      if (step.tool) {
-        expect(playable).toContain(step.tool)
-      }
+      expect(step.projectMgmt?.question?.length).toBeGreaterThan(10)
+      expect(step.governance?.question?.length).toBeGreaterThan(10)
     }
-    expect(adapted.tools).not.toEqual(['python', 'sql'])
   })
 
-  it('uses more tasks for data-ai than low-code IT roles when possible', () => {
-    const raw = getLevel(1, [], 'fr', 'pm')
-    const itPm = adaptLevelForRole(raw, {
-      projectKind: 'it',
-      playerRole: 'chef-de-projet',
-      locale: 'fr',
-      homeEntity: 'retail',
-    })
-    const dataAi = adaptLevelForRole(raw, {
+  it('uses role-scoped exercises only for endless levels (6+)', () => {
+    const raw = getLevel(6, ['sql', 'python'], 'fr', 'pm')
+    expect(raw.endless).toBe(true)
+
+    const adapted = adaptLevelForRole(raw, {
       projectKind: 'data-ai',
-      playerRole: 'data-engineer',
+      playerRole: 'technico-fonctionnel',
       locale: 'fr',
       homeEntity: 'retail',
     })
-    expect(dataAi.steps.length).toBeGreaterThanOrEqual(itPm.steps.length)
-    expect(dataAi.tools.some((t) => ['python', 'sql', 'spark', 'dbt'].includes(t))).toBe(true)
+
+    expect(adapted.steps.every((s) => s.id.startsWith('e6-'))).toBe(true)
+    expect(adapted.steps.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('varies exercises and task counts across curated lots 0–5', () => {
+  it('varies curated step sets across lots 0–5', () => {
     const role = {
       projectKind: 'data-ai' as const,
-      playerRole: 'data-engineer' as const,
+      playerRole: 'technico-fonctionnel' as const,
       locale: 'fr' as const,
       homeEntity: 'retail' as const,
     }
     const stepSets: string[][] = []
-    const taskCounts: number[] = []
-    for (let id = 0; id < 6; id++) {
-      const fixed = adaptLevelForRole(getLevel(id, [], 'fr', 'pm'), role)
-      stepSets.push(fixed.steps.map((s) => s.id))
-      taskCounts.push(fixed.steps.length)
-      expect(fixed.title).toContain(`Lot ${id + 1}`)
+    for (let id = 0; id < curatedCount(); id++) {
+      const adapted = adaptLevelForRole(getLevel(id, [], 'fr', 'pm'), role)
+      stepSets.push(adapted.steps.map((s) => s.id))
+      expect(adapted.title).toContain(`Lot ${id + 1}`)
+      expect(adapted.steps.length).toBeGreaterThanOrEqual(2)
     }
-    expect(new Set(taskCounts).size).toBeGreaterThan(1)
     for (let i = 0; i < stepSets.length; i++) {
       for (let j = i + 1; j < stepSets.length; j++) {
-        const overlap = stepSets[i]!.filter((sid) => stepSets[j]!.includes(sid))
-        expect(overlap.length).toBeLessThan(stepSets[i]!.length)
+        expect(stepSets[i]).not.toEqual(stepSets[j]!)
       }
     }
   })
@@ -103,7 +96,7 @@ describe('role content adaptation', () => {
     expect(MUTUALIS_ENTITIES).toHaveLength(8)
   })
 
-  it('adapts briefing with home entity and domain problem', () => {
+  it('adapts briefing with home entity, story problem, and domain beat', () => {
     const raw = getLevel(0, [], 'fr', 'pm')
     const adapted = adaptLevelForRole(raw, {
       projectKind: 'it',
@@ -114,6 +107,7 @@ describe('role content adaptation', () => {
     const story = roleStory('it', 'scrum-master', 'fr')!
     expect(adapted.brief.context).toMatch(/Mutualis Assurance|Mutualis Group/)
     expect(adapted.brief.problem).not.toContain('zéro industrialisation')
+    expect(adapted.brief.problem.length).toBeGreaterThan(20)
     expect(adapted.title).toContain(story.codename)
     expect(adapted.intro).toContain('Jira')
   })
@@ -152,7 +146,7 @@ describe('role content adaptation', () => {
     }
   })
 
-  it('enriches every step with PM and governance packs before practice', () => {
+  it('enriches every curated step with PM and governance packs before practice', () => {
     const lvl = getLevel(0, [], 'fr', 'pm')
     expect(lvl.steps.length).toBeGreaterThan(0)
     for (const step of lvl.steps) {

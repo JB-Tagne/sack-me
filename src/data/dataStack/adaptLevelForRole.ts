@@ -1,9 +1,10 @@
 import type { PmGameLocale } from '../../i18n/pmGameLocale'
-import { buildRoleScopedSteps, type AdventureLevel } from './adventure'
+import { buildRoleScopedSteps, curatedCount, type AdventureLevel } from './adventure'
 import {
   castingChip,
   rebrandMutualisCopy,
   resolveExerciseCasting,
+  type MutualisEntity,
   type MutualisEntityId,
 } from './mutualisEntities'
 import { playableToolsForRole } from './roleContent'
@@ -34,6 +35,40 @@ function lotLabel(levelId: number, locale: PmGameLocale): string {
   return locale === 'en' ? `Batch ${n}` : `Lot ${n}`
 }
 
+/** Curated lots 0–5 keep hand-authored steps (and curated PM/gov QCM keys). */
+function isCuratedLevel(level: AdventureLevel): boolean {
+  return !level.endless && level.id >= 0 && level.id < curatedCount()
+}
+
+function stepsForRoleLevel(
+  level: AdventureLevel,
+  playable: ToolId[],
+  projectKind: ProjectKind,
+  locale: PmGameLocale,
+): AdventureLevel['steps'] {
+  if (isCuratedLevel(level)) return level.steps
+  if (playable.length === 0) return level.steps
+  const roleSteps = buildRoleScopedSteps(
+    level.id,
+    level.phase,
+    playable,
+    projectKind,
+    locale,
+  )
+  return roleSteps.length > 0 ? roleSteps : level.steps
+}
+
+function briefProblem(
+  story: ReturnType<typeof roleStoryForPhase>,
+  castProblem: string,
+  lead: MutualisEntity,
+): string {
+  if (!story) return castProblem
+  const narrative = rebrandMutualisCopy(story.problem, lead)
+  if (narrative === castProblem) return narrative
+  return `${narrative}\n\n${castProblem}`
+}
+
 /** Adapte intro / brief / outils d’onboarding à l’histoire rôle × projet × filiale. */
 export function adaptLevelForRole(
   level: AdventureLevel,
@@ -54,13 +89,10 @@ export function adaptLevelForRole(
   const lot = lotLabel(level.id, locale)
   const phaseLbl = phaseLabel(level.phase, locale)
 
-  const roleSteps =
-    playable.length > 0
-      ? buildRoleScopedSteps(level.id, level.phase, playable, projectKind, locale)
-      : []
-  const steps = roleSteps.length > 0 ? roleSteps : level.steps
+  const steps = stepsForRoleLevel(level, playable, projectKind, locale)
   const onboardTools = roleDisplayTools(steps, playable)
   const stepObjectives = steps.map((s) => s.title)
+  const problemLine = briefProblem(story, cast.domainProblem, cast.lead)
 
   const consigne =
     track === 'governance'
@@ -88,7 +120,7 @@ export function adaptLevelForRole(
         ...level.brief,
         consigne,
         context: `${cast.setting}\n\n${rebrandMutualisCopy(level.brief.context, cast.lead)}`,
-        problem: cast.domainProblem,
+        problem: problemLine,
         projectName: `${rebrandMutualisCopy(level.brief.projectName, cast.lead)} · ${lot}`,
         objectives:
           stepObjectives.length > 0
@@ -114,7 +146,7 @@ export function adaptLevelForRole(
     brief: {
       projectName,
       context: `${cast.setting}\n\n${rebrandMutualisCopy(story.stakes, cast.lead)}\n\n${rebrandMutualisCopy(story.context, cast.lead)}`,
-      problem: cast.domainProblem,
+      problem: problemLine,
       objectives,
       consigne,
     },

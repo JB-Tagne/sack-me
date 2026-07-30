@@ -1557,7 +1557,7 @@ SELECT * FROM ranked WHERE rn = 1;`,
       },
     ],
     modelSolution:
-      '```sql\nSELECT employee_id, full_name, department\nFROM retail_employees\nWHERE active_record = 1\n  AND UPPER(TRIM(department)) = \'SALES\';\n-- Effectif :\nSELECT COUNT(*) AS effectif_sales\nFROM retail_employees\nWHERE active_record = 1 AND UPPER(TRIM(department)) = \'SALES\';\n```',
+      '```sql\nSELECT employee_id, employee_name, department\nFROM retail_employees\nWHERE active_record = 1\n  AND UPPER(TRIM(department)) = \'SALES\';\n-- Effectif :\nSELECT COUNT(*) AS effectif_sales\nFROM retail_employees\nWHERE active_record = 1 AND UPPER(TRIM(department)) = \'SALES\';\n```',
   },
   {
     id: 'sql-case-having-1',
@@ -1663,11 +1663,11 @@ SELECT * FROM ranked WHERE rn = 1;`,
     level: 3,
     title: 'LAG + RANK — évolution trafic capteur',
     context:
-      'capteur_a_retail : tu compares le footfall au jour précédent et tu ranks les jours les plus chargés.',
+      'capteur_a_retail : tu compares visiteurs_count au jour précédent et tu ranks les jours les plus chargés.',
     description:
       'Tu combines LAG et RANK/DENSE_RANK sur une fenêtre temporelle.',
     tasks: [
-      'LAG(mesure) OVER (ORDER BY jour)',
+      'LAG(visiteurs_count) OVER (ORDER BY date)',
       'Écart vs J-1',
       'RANK ou DENSE_RANK des jours par trafic',
     ],
@@ -1676,11 +1676,11 @@ SELECT * FROM ranked WHERE rn = 1;`,
     steps: [
       {
         title: 'LAG',
-        detail: 'LAG(footfall) OVER (ORDER BY jour) AS prev_j',
+        detail: 'LAG(visiteurs_count) OVER (ORDER BY date) AS prev_j',
       },
       {
         title: 'Rank',
-        detail: 'DENSE_RANK() OVER (ORDER BY footfall DESC) AS rk',
+        detail: 'DENSE_RANK() OVER (ORDER BY visiteurs_count DESC) AS rk',
       },
     ],
     questions: [
@@ -1701,7 +1701,7 @@ SELECT * FROM ranked WHERE rn = 1;`,
       },
     ],
     modelSolution:
-      '```sql\nSELECT\n  jour,\n  footfall,\n  LAG(footfall) OVER (ORDER BY jour) AS prev_footfall,\n  footfall - LAG(footfall) OVER (ORDER BY jour) AS delta,\n  DENSE_RANK() OVER (ORDER BY footfall DESC) AS rk\nFROM capteur_a_retail;\n```',
+      '```sql\nSELECT\n  date,\n  visiteurs_count,\n  LAG(visiteurs_count) OVER (ORDER BY date) AS prev_visiteurs,\n  visiteurs_count - LAG(visiteurs_count) OVER (ORDER BY date) AS delta,\n  DENSE_RANK() OVER (ORDER BY visiteurs_count DESC) AS rk\nFROM capteur_a_retail;\n```',
   },
   {
     id: 'sql-rollup-4',

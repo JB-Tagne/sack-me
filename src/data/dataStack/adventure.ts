@@ -526,7 +526,7 @@ const CURATED: AdventureLevel[] = [
         feedbackPass: 'Window functions — niveau senior SQL data.',
         feedbackFail: 'Il me faut une clause OVER (… PARTITION BY …).',
         correction:
-          '```sql\nSELECT store_name, time_slot, turnover_weight,\n       SUM(turnover_weight) OVER (\n         PARTITION BY store_name ORDER BY time_slot\n       ) AS running_weight,\n       RANK() OVER (\n         PARTITION BY store_name ORDER BY turnover_weight DESC\n       ) AS rnk\nFROM weights_turnover_sample;\n```',
+          '```sql\nSELECT store_name, quarterhour, turnover_weight,\n       SUM(turnover_weight) OVER (\n         PARTITION BY store_name ORDER BY quarterhour\n       ) AS running_weight,\n       RANK() OVER (\n         PARTITION BY store_name ORDER BY turnover_weight DESC\n       ) AS rnk\nFROM weights_turnover_sample;\n```',
         tool: 'bigquery',
         phase: 'ingestion',
       },
@@ -710,12 +710,12 @@ const CURATED: AdventureLevel[] = [
       {
         id: 'l4-grain',
         title: 'Python — aligner grains capteur × CA',
-        say: 'capteur = 1 ligne/jour ; weights = magasin×créneau. Écris un script qui agrège puis (conceptuellement) joint sur la date.',
-        do: 'Colle un script Python (groupby date / merge) ou un pseudo-code exécutable clair.',
+        say: 'capteur = 1 ligne/jour (global) ; weights = magasin×créneau. Agrège weights par magasin avant toute jointure — pas de clé date commune.',
+        do: 'Colle un script Python qui agrège weights par store_name et documente pourquoi on ne merge pas aveuglément avec capteur.',
         how: [
-          'weights.groupby("date")["turnover_weight"].sum()',
-          'merge avec capteur sur date',
-          'ratio intensité / visiteurs',
+          'weights.groupby("store_name")["turnover_weight"].sum()',
+          'capteur sans magasin → pas de merge 1:1',
+          'ratio intensité par magasin (sans diviser par visiteurs magasin absents)',
         ],
         trap:
           'Joindre sans agréger multiplie les lignes (créneaux × jour) et fausse les totaux.',
@@ -724,13 +724,13 @@ const CURATED: AdventureLevel[] = [
         alsoDownload: [DS.weightsSample],
         validate: {
           minLength: 50,
-          keywords: ['groupby', 'merge', 'date', 'sum', 'visiteur', 'turnover', 'read_csv'],
+          keywords: ['groupby', 'store', 'sum', 'turnover', 'read_csv', 'grain', 'magasin'],
           keywordMin: 2,
         },
         feedbackPass: 'Tu raisonnes grain avant dashboard — essentiel.',
-        feedbackFail: 'Montre une agrégation puis un merge sur la date.',
+        feedbackFail: 'Montre une agrégation par magasin et explique l’absence de clé commune avec capteur.',
         correction:
-          '```python\nimport pandas as pd\ncap = pd.read_csv("capteur_a_retail.csv")\nw = pd.read_csv("weights_turnover_sample.csv")\n# adapter le nom de colonne date selon le fichier\ndaily = w.groupby("date", as_index=False)["turnover_weight"].sum()\nout = daily.merge(cap, on="date", how="inner")\nout["ratio"] = out["turnover_weight"] / out["visiteurs_count"]\nprint(out.head())\n```',
+          '```python\nimport pandas as pd\ncap = pd.read_csv("capteur_a_retail.csv")\nw = pd.read_csv("weights_turnover_sample.csv")\nby_store = w.groupby("store_name", as_index=False)["turnover_weight"].sum()\n# capteur = trafic journalier global (pas de store_name) — pas de merge direct\nprint(by_store.head())\nprint(cap[["date", "visiteurs_count"]].head())\n```',
         tool: 'python',
         phase: 'exposition',
       },

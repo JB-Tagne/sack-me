@@ -14,7 +14,7 @@ import {
 } from './pmPacks'
 import { dataDoDForStep } from './operationalDoD'
 import type { PmGameLocale } from '../../i18n/pmGameLocale'
-import type { RoleTrack } from './projectPaths'
+import type { RoleTrack, ProjectKind } from './projectPaths'
 import type { MeetingStep } from './pmGovTypes'
 
 export type { StepGovernance } from './governancePacks'
@@ -190,6 +190,9 @@ export interface AdventureLevel {
 }
 
 const DS = GAME_DATASETS
+
+/** Task count per curated lot (0–5) — varies the brief meta line. */
+export const CURATED_STEP_COUNTS: readonly number[] = [2, 3, 2, 3, 3, 2]
 
 const CURATED: AdventureLevel[] = [
   {
@@ -1035,6 +1038,62 @@ function exercisePoolForRole(
   )
 }
 
+function preferToolsSeed(tools: ToolId[]): number {
+  return tools.reduce(
+    (n, id) => n + id.split('').reduce((a, c) => a + c.charCodeAt(0), 0),
+    0,
+  )
+}
+
+function pickRoleExercises(
+  pool: PracticeExercise[],
+  levelId: number,
+  stepCount: number,
+  preferTools: ToolId[],
+): PracticeExercise[] {
+  if (pool.length === 0 || stepCount <= 0) return []
+
+  const start = (levelId * 13 + preferToolsSeed(preferTools)) % pool.length
+  const picked: PracticeExercise[] = []
+  const used = new Set<string>()
+  const usedTools = new Set<ToolId>()
+
+  for (let n = 0; n < stepCount; n++) {
+    let found: PracticeExercise | undefined
+    for (let j = 0; j < pool.length; j++) {
+      const ex = pool[(start + n * 7 + j) % pool.length]!
+      if (used.has(ex.id)) continue
+      if (!usedTools.has(ex.tool) || n === stepCount - 1) {
+        found = ex
+        break
+      }
+    }
+    if (!found) {
+      found = pool.find((ex) => !used.has(ex.id))
+    }
+    if (found) {
+      picked.push(found)
+      used.add(found.id)
+      usedTools.add(found.tool)
+    }
+  }
+  return picked
+}
+
+function stepCountForLevel(
+  levelId: number,
+  projectKind: ProjectKind,
+  codePlayable: number,
+  poolLength: number,
+): number {
+  if (levelId >= 0 && levelId < CURATED_STEP_COUNTS.length) {
+    return Math.min(CURATED_STEP_COUNTS[levelId]!, poolLength)
+  }
+  if (projectKind === 'data-ai') return Math.min(3, poolLength)
+  if (codePlayable >= 2) return Math.min(3, poolLength)
+  return Math.min(2, poolLength)
+}
+
 /** Curated/endless levels: pick hands-on steps from the role playable stack. */
 export function buildRoleScopedSteps(
   levelId: number,
@@ -1047,26 +1106,8 @@ export function buildRoleScopedSteps(
   if (pool.length === 0) return []
 
   const codePlayable = preferTools.filter((id) => isCodeFocusTool(id)).length
-  const stepCount =
-    projectKind === 'data-ai'
-      ? Math.min(3, pool.length)
-      : codePlayable >= 2
-        ? Math.min(3, pool.length)
-        : Math.min(2, pool.length)
-
-  const offset =
-    (levelId * 7 + (projectKind === 'data-ai' ? 3 : 0) + preferTools.length) %
-    Math.max(1, pool.length)
-  const picked: PracticeExercise[] = []
-  const used = new Set<string>()
-  for (let i = 0; i < stepCount; i++) {
-    let ex = pool[(offset + i) % pool.length]!
-    if (used.has(ex.id)) {
-      ex = pool.find((e) => !used.has(e.id)) ?? ex
-    }
-    used.add(ex.id)
-    picked.push(ex)
-  }
+  const stepCount = stepCountForLevel(levelId, projectKind, codePlayable, pool.length)
+  const picked = pickRoleExercises(pool, levelId, stepCount, preferTools)
 
   const intensity = levelId
   return picked

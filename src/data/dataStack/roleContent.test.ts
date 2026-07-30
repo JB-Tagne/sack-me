@@ -40,13 +40,15 @@ describe('role content adaptation', () => {
       locale: 'fr',
       homeEntity: 'bank',
     })
-    expect(adapted.tools).toContain('jira')
-    expect(adapted.steps.length).toBeGreaterThanOrEqual(2)
+    expect(adapted.steps.length).toBe(2)
+    expect(adapted.title).toContain('Lot 1')
+    expect(adapted.tools.length).toBeGreaterThan(0)
     for (const step of adapted.steps) {
       if (step.tool) {
         expect(playable).toContain(step.tool)
       }
     }
+    expect(adapted.tools).not.toEqual(['python', 'sql'])
   })
 
   it('uses more tasks for data-ai than low-code IT roles when possible', () => {
@@ -65,6 +67,30 @@ describe('role content adaptation', () => {
     })
     expect(dataAi.steps.length).toBeGreaterThanOrEqual(itPm.steps.length)
     expect(dataAi.tools.some((t) => ['python', 'sql', 'spark', 'dbt'].includes(t))).toBe(true)
+  })
+
+  it('varies exercises and task counts across curated lots 0–5', () => {
+    const role = {
+      projectKind: 'data-ai' as const,
+      playerRole: 'data-engineer' as const,
+      locale: 'fr' as const,
+      homeEntity: 'retail' as const,
+    }
+    const stepSets: string[][] = []
+    const taskCounts: number[] = []
+    for (let id = 0; id < 6; id++) {
+      const fixed = adaptLevelForRole(getLevel(id, [], 'fr', 'pm'), role)
+      stepSets.push(fixed.steps.map((s) => s.id))
+      taskCounts.push(fixed.steps.length)
+      expect(fixed.title).toContain(`Lot ${id + 1}`)
+    }
+    expect(new Set(taskCounts).size).toBeGreaterThan(1)
+    for (let i = 0; i < stepSets.length; i++) {
+      for (let j = i + 1; j < stepSets.length; j++) {
+        const overlap = stepSets[i]!.filter((sid) => stepSets[j]!.includes(sid))
+        expect(overlap.length).toBeLessThan(stepSets[i]!.length)
+      }
+    }
   })
 
   it('varies Mutualis entity casting by level and home company', () => {

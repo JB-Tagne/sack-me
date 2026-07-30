@@ -17,7 +17,7 @@ Merci de contribuer à **Sack Me!**
 ```bash
 npm install
 npm run dev
-# → http://localhost:5173
+# → http://localhost:5174 (5173 reserved for My Pro Hub)
 ```
 
 ### Avant une PR
@@ -55,7 +55,7 @@ Thanks for contributing to **Sack Me!**
 ```bash
 npm install
 npm run dev
-# → http://localhost:5173
+# → http://localhost:5174 (5173 reserved for My Pro Hub)
 ```
 
 ### Before a PR

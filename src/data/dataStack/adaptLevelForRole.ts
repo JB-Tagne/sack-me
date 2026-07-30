@@ -21,14 +21,17 @@ export interface AdaptLevelOpts {
   homeEntity?: MutualisEntityId
 }
 
-function roleDisplayTools(
-  playable: ToolId[],
-  steps: AdventureLevel['steps'],
-): ToolId[] {
+function roleDisplayTools(steps: AdventureLevel['steps'], playable: ToolId[]): ToolId[] {
   const fromSteps = [
     ...new Set(steps.map((s) => s.tool).filter((id): id is ToolId => Boolean(id))),
   ]
-  return [...new Set([...playable.slice(0, 5), ...fromSteps])].slice(0, 6) as ToolId[]
+  if (fromSteps.length > 0) return fromSteps
+  return playable.slice(0, 5)
+}
+
+function lotLabel(levelId: number, locale: PmGameLocale): string {
+  const n = levelId + 1
+  return locale === 'en' ? `Batch ${n}` : `Lot ${n}`
 }
 
 /** Adapte intro / brief / outils d’onboarding à l’histoire rôle × projet × filiale. */
@@ -48,13 +51,16 @@ export function adaptLevelForRole(
   const playable = playableToolsForRole(projectKind, playerRole)
   const marketStack = toolsForRole(projectKind, playerRole)
   const stackLine = marketStack.map((t) => t.name).join(' · ')
+  const lot = lotLabel(level.id, locale)
+  const phaseLbl = phaseLabel(level.phase, locale)
 
   const roleSteps =
     playable.length > 0
       ? buildRoleScopedSteps(level.id, level.phase, playable, projectKind, locale)
       : []
   const steps = roleSteps.length > 0 ? roleSteps : level.steps
-  const onboardTools = roleDisplayTools(playable, steps)
+  const onboardTools = roleDisplayTools(steps, playable)
+  const stepObjectives = steps.map((s) => s.title)
 
   const consigne =
     track === 'governance'
@@ -74,31 +80,37 @@ export function adaptLevelForRole(
     return {
       ...level,
       ...basePatch,
+      title: `${level.title} · ${lot}`,
+      intro: en
+        ? `${lot} · ${phaseLbl}. Stack: ${stackLine}.`
+        : `${lot} · ${phaseLbl}. Stack : ${stackLine}.`,
       brief: {
         ...level.brief,
         consigne,
         context: `${cast.setting}\n\n${rebrandMutualisCopy(level.brief.context, cast.lead)}`,
         problem: cast.domainProblem,
-        projectName: rebrandMutualisCopy(level.brief.projectName, cast.lead),
+        projectName: `${rebrandMutualisCopy(level.brief.projectName, cast.lead)} · ${lot}`,
+        objectives:
+          stepObjectives.length > 0
+            ? stepObjectives.slice(0, 5)
+            : level.brief.objectives,
       },
     }
   }
 
-  const labeledPhase = phaseLabel(level.phase, locale)
-  const phaseLabelBit = en ? `Phase focus: ${labeledPhase}.` : `Focus phase : ${labeledPhase}.`
-  const objectives = [...story.objectives, ...level.brief.objectives]
+  const objectives = [...stepObjectives, ...story.objectives]
     .map((o) => rebrandMutualisCopy(o, cast.lead))
     .slice(0, 5)
 
-  const projectName = `${rebrandMutualisCopy(story.projectName, cast.lead)} · ${cast.lead.name}`
+  const projectName = `${rebrandMutualisCopy(story.projectName, cast.lead)} · ${lot} · ${cast.lead.name}`
 
   return {
     ...level,
     ...basePatch,
-    title: `${story.codename} · ${cast.lead.name}`,
+    title: `${story.codename} · ${lot} · ${phaseLbl}`,
     intro: en
-      ? `${castingChip(cast, locale)}. ${rebrandMutualisCopy(story.tagline, cast.lead)} Scope: ${story.scope}. Stack: ${stackLine}. ${phaseLabelBit}`
-      : `${castingChip(cast, locale)}. ${rebrandMutualisCopy(story.tagline, cast.lead)} Périmètre : ${story.scope}. Stack : ${stackLine}. ${phaseLabelBit}`,
+      ? `${castingChip(cast, locale)}. ${rebrandMutualisCopy(story.tagline, cast.lead)} Scope: ${story.scope}. ${lot} — tools in this batch follow ${phaseLbl}. Stack: ${stackLine}.`
+      : `${castingChip(cast, locale)}. ${rebrandMutualisCopy(story.tagline, cast.lead)} Périmètre : ${story.scope}. ${lot} — outils de ce lot en phase ${phaseLbl}. Stack : ${stackLine}.`,
     brief: {
       projectName,
       context: `${cast.setting}\n\n${rebrandMutualisCopy(story.stakes, cast.lead)}\n\n${rebrandMutualisCopy(story.context, cast.lead)}`,

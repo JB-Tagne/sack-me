@@ -9,8 +9,6 @@ Career simulation serious game · **project management** & **data governance**
 
 **[Jouer en ligne — GitHub Pages](https://jb-tagne.github.io/sack-me/)**
 
-Local : `npm run dev` → [http://localhost:5173](http://localhost:5173)
-
 ---
 
 ## Français
@@ -33,12 +31,16 @@ Toute mauvaise décision te rapproche de la sortie.
 
 ### Démarrage rapide
 
+Pour jouer : **[https://jb-tagne.github.io/sack-me/](https://jb-tagne.github.io/sack-me/)**
+
+Développement local :
+
 ```powershell
 npm install
 npm run dev
 ```
 
-Ouvre **http://localhost:5173**
+Dev server : **http://localhost:5174** (le port 5173 reste libre pour My Pro Hub).
 
 Build production :
 
@@ -106,7 +108,7 @@ Test local du build Pages :
 $env:VITE_BASE="/sack-me/"; npm run build; npm run preview
 ```
 
-Puis ouvre l’URL affichée par Vite (souvent `http://localhost:4173/sack-me/`).
+Ouvre l’URL affichée par Vite dans le terminal.
 
 ---
 
@@ -130,12 +132,16 @@ Every bad decision brings you closer to getting sacked.
 
 ### Quick start
 
+Play online: **[https://jb-tagne.github.io/sack-me/](https://jb-tagne.github.io/sack-me/)**
+
+Local development:
+
 ```powershell
 npm install
 npm run dev
 ```
 
-Open **http://localhost:5173**
+Dev server: **http://localhost:5174** (port 5173 stays free for My Pro Hub).
 
 Production build:
 
@@ -203,4 +209,4 @@ Local Pages build test:
 $env:VITE_BASE="/sack-me/"; npm run build; npm run preview
 ```
 
-Then open the URL Vite prints (often `http://localhost:4173/sack-me/`).
+Open the URL Vite prints in the terminal.

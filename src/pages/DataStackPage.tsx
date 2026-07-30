@@ -869,10 +869,7 @@ function DataStackPageInner() {
 
   const phaseLbl = phaseLabel(level.phase, locale)
   const toolsLine = level.tools.map(toolLabel).filter(Boolean).join(' · ')
-  const briefToolsLine =
-    marketStack.length > 0
-      ? marketStack.slice(0, 5).map((t) => t.name).join(' · ')
-      : toolsLine
+  const briefToolsLine = toolsLine
   const brief = level.brief
   const halfLabel =
     stepHalf === 'pm' ? t('half.pm') : stepHalf === 'gov' ? t('half.gov') : t('half.tech')

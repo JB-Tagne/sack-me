@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CampaignCertificate } from '../components/CampaignCertificate'
-import { DeliverablePad } from '../components/DeliverablePad'
-import { ToolOnboardingPanel } from '../components/ToolOnboardingPanel'
 import { ToolProgressSidebar } from '../components/ToolProgressSidebar'
 import { curatedCount, defaultTrapForTool, getLevel, globalAdventureStepIndex, type AdventureStep } from '../data/dataStack/adventure'
-import { onboardingForTools } from '../data/dataStack/toolOnboarding'
-import { phaseLabel, STACK_TOOLS, type ToolId } from '../data/dataStack/tools'
+import { phaseLabel } from '../data/dataStack/tools'
 import { evaluateStep, type StepEval, type StepSubmission } from '../lib/adventureEngine'
 import {
   hasProjectPath,
@@ -32,11 +28,9 @@ import { personalizeMeetingStep } from '../lib/personalizeMeeting'
 import { playerFirstName } from '../lib/playerIdentity'
 import { shareOrCopyScore } from '../lib/shareScore'
 import { adaptLevelForRole } from '../data/dataStack/adaptLevelForRole'
-import { datasetHint } from '../data/dataStack/gameDatasets'
 import {
   castingChip,
   mutualisEntity,
-  MUTUALIS_GROUP_NAME,
   resolveExerciseCasting,
   type MutualisEntityId,
 } from '../data/dataStack/mutualisEntities'
@@ -51,7 +45,6 @@ import { preferToolsForRole } from '../lib/preferToolsForRole'
 import { recordToolAttempt } from '../lib/toolMastery'
 import { PmGameI18nProvider, usePmGameI18n } from '../i18n/PmGameI18n'
 import { GAME_LANDING_FLAG } from '../lib/pmGameFlags'
-import { PmGameLangToggle } from '../components/PmGameLangToggle'
 import { PmGameLanding } from '../components/PmGameLanding'
 import { PmGameIntro } from '../components/PmGameIntro'
 import { PmGameFireAlert } from '../components/PmGameFireAlert'
@@ -69,13 +62,17 @@ import {
   type PlayerRoleId,
   type ProjectKind,
 } from '../data/dataStack/projectPaths'
+import { decisionHalfForTrack, startHalfForStep } from '../lib/adventureHalf'
+import { toolLabel } from '../lib/toolLabel'
+import { AdventureHud } from '../components/adventure/AdventureHud'
+import { WelcomePanel } from '../components/adventure/WelcomePanel'
+import { BriefingPanel } from '../components/adventure/BriefingPanel'
+import { DecisionQcmPanel } from '../components/adventure/DecisionQcmPanel'
+import { TechPlayPanel } from '../components/adventure/TechPlayPanel'
+import { FeedbackPanel } from '../components/adventure/FeedbackPanel'
+import { LevelCompletePanel } from '../components/adventure/LevelCompletePanel'
 
 type Phase = AdventureUiPhase
-
-function toolLabel(id: string | undefined): string {
-  if (!id) return ''
-  return STACK_TOOLS.find((t) => t.id === id)?.name ?? id
-}
 
 export function DataStackPage() {
   return (
@@ -92,7 +89,7 @@ function DataStackPageInner() {
   const initial = useMemo(() => loadAdventureProgress(), [])
   const [progress, setProgress] = useState<AdventureProgress>(initial)
   const [phase, setPhase] = useState<Phase>(() => resolveResumePhase(initial))
-  /** Accueil : titre animé → intro → jeu. */
+  /** Landing: animated title -> intro -> game. */
   const [landingStep, setLandingStep] = useState<LandingStep | null>('title')
   const [animKey, setAnimKey] = useState(0)
   const [text, setText] = useState('')
@@ -103,11 +100,11 @@ function DataStackPageInner() {
   const [evalResult, setEvalResult] = useState<StepEval | null>(null)
   const [encourage, setEncourage] = useState('')
   const [fireAlert, setFireAlert] = useState<FireAlertLevel>(null)
-  /** Réunion en cours (COPROJ / COPIL / Scrum / COMEX fire). */
+  /** Meeting currently in progress (COPROJ / COPIL / Scrum / COMEX fire). */
   const [activeMeeting, setActiveMeeting] = useState<MeetingStep | null>(null)
-  /** Index de la question active dans la réunion (0–4). */
+  /** Index of the active question in the current meeting (0-4). */
   const [meetingQIndex, setMeetingQIndex] = useState(0)
-  /** Réponses du joueur pour chaque question de la réunion en cours. */
+  /** Player answers for each question of the current meeting. */
   const [meetingAnswers, setMeetingAnswers] = useState<number[]>([])
   const [shareStatus, setShareStatus] = useState<'idle' | 'shared' | 'copied' | 'failed'>('idle')
   const panelHeadingRef = useRef<HTMLHeadingElement>(null)
@@ -219,6 +216,17 @@ function DataStackPageInner() {
         [stepId]: { ...prev.drafts[stepId], ...patch },
       },
     }))
+  }
+
+  /** Reset the in-progress step form (text/choices/file/eval/encourage). */
+  function clearPlayForm() {
+    setText('')
+    setPmChoice(undefined)
+    setGovChoice(undefined)
+    setFileName(undefined)
+    setFileDataUrl(undefined)
+    setEvalResult(null)
+    setEncourage('')
   }
 
   function enterGameAfterLanding(p: AdventureProgress = loadAdventureProgress()) {
@@ -333,14 +341,7 @@ function DataStackPageInner() {
 
   function launchTasks() {
     const first = level.steps[progress.stepIndex]
-    const startHalf =
-      roleTrack === 'governance'
-        ? first?.governance
-          ? 'gov'
-          : 'tech'
-        : first?.projectMgmt
-          ? 'pm'
-          : 'tech'
+    const startHalf = decisionHalfForTrack(roleTrack, first)
     persistFrom((prev) => ({ ...prev, phase: 'play', stepHalf: startHalf }))
     setPhase('play')
     setAnimKey((k) => k + 1)
@@ -356,13 +357,7 @@ function DataStackPageInner() {
     setProgress(next)
     setPhase('career-pick')
     setLandingStep('title')
-    setText('')
-    setPmChoice(undefined)
-    setGovChoice(undefined)
-    setFileName(undefined)
-    setFileDataUrl(undefined)
-    setEvalResult(null)
-    setEncourage('')
+    clearPlayForm()
     setFireAlert(null)
     setActiveMeeting(null)
     setAnimKey((k) => k + 1)
@@ -421,7 +416,7 @@ function DataStackPageInner() {
       const nextCareer = applyCareerOutcome(prev.career, result.passed, mode)
       outcomeCareer = nextCareer
       const completed = new Set(prev.completedStepIds)
-      // Une tâche se clôture sur le livrable technique (piste PM ou gouvernance).
+      // A task only closes on the technical deliverable (PM or governance track).
       if (result.passed && mode === 'tech') completed.add(step.id)
       const toolStats =
         mode === 'tech'
@@ -455,15 +450,6 @@ function DataStackPageInner() {
     }
   }
 
-  function startHalfForStep(s: AdventureStep | undefined, globalIdx?: number): AdventureStepHalf {
-    // Si une réunion périodique est prévue à cet index global, on commence par elle
-    if (globalIdx !== undefined && getMeetingForStep(globalIdx, locale)) return 'meeting'
-    if (roleTrack === 'governance') {
-      return s?.governance ? 'gov' : 'tech'
-    }
-    return s?.projectMgmt ? 'pm' : 'tech'
-  }
-
   function globalStepIndex(p: AdventureProgress = progress): number {
     return globalAdventureStepIndex(p.levelId, p.stepIndex)
   }
@@ -477,8 +463,8 @@ function DataStackPageInner() {
   }
 
   /**
-   * Réponse du joueur à la question active de la réunion.
-   * Pour les réunions COMEX fire, applique le fireRiskDelta si la réponse est bonne.
+   * Player answer to the active meeting question.
+   * For COMEX fire meetings, applies the fireRiskDelta when the answer is correct.
    */
   function onMeetingAnswer(chosenIndex: number) {
     if (!activeMeeting) return
@@ -488,7 +474,7 @@ function DataStackPageInner() {
     const newAnswers = [...meetingAnswers, chosenIndex]
     setMeetingAnswers(newAnswers)
 
-    // Appliquer fireRiskDelta si réunion COMEX fire et bonne réponse
+    // Apply fireRiskDelta for COMEX fire meetings on a correct answer
     if (q.fireRiskDelta !== undefined && chosenIndex === q.correctIndex) {
       persistFrom((prev) => ({
         ...prev,
@@ -504,12 +490,12 @@ function DataStackPageInner() {
     }
   }
 
-  /** Ferme la réunion et reprend le jeu normal après la dernière question. */
+  /** Close the meeting and resume normal play after the last question. */
   function onMeetingClose() {
     if (!activeMeeting) return
     const kind = activeMeeting.kind
 
-    // Réunions COMEX fire : après la réunion, le fireAlert simple est acquitté
+    // COMEX fire meetings: the simple fire alert is acknowledged once the meeting ends
     if (
       kind === 'comex-danger' ||
       kind === 'comex-warning' ||
@@ -519,11 +505,11 @@ function DataStackPageInner() {
       setActiveMeeting(null)
       setMeetingQIndex(0)
       setMeetingAnswers([])
-      // Si le fireRisk est redescendu sous le seuil après les bonnes réponses,
-      // on retire l'alerte; sinon on la garde mais on acquitte le modal
+      // If fireRisk dropped back below the threshold after correct answers,
+      // drop the alert; otherwise keep it but dismiss the modal
       const updatedRisk = progress.career.fireRisk
       if (kind === 'comex-fired' && updatedRisk >= 100) {
-        // Licenciement confirmé : reset
+        // Confirmed firing: reset
         const next = resetAdventureProgress({
           keepPlayerDisplayName: progress.playerDisplayName,
         })
@@ -531,13 +517,7 @@ function DataStackPageInner() {
         setPhase('career-pick')
         setLandingStep('title')
         setFireAlert(null)
-        setEvalResult(null)
-        setEncourage('')
-        setText('')
-        setPmChoice(undefined)
-        setGovChoice(undefined)
-        setFileName(undefined)
-        setFileDataUrl(undefined)
+        clearPlayForm()
         setAnimKey((k) => k + 1)
       } else {
         setFireAlert(null)
@@ -545,14 +525,11 @@ function DataStackPageInner() {
       return
     }
 
-    // Réunions normales : on avance vers la demi-étape PM/GOV/TECH
+    // Normal meetings: move forward to the PM/GOV/TECH half
     setActiveMeeting(null)
     setMeetingQIndex(0)
     setMeetingAnswers([])
-    const normalHalf: AdventureStepHalf =
-      roleTrack === 'governance'
-        ? (step?.governance ? 'gov' : 'tech')
-        : (step?.projectMgmt ? 'pm' : 'tech')
+    const normalHalf: AdventureStepHalf = decisionHalfForTrack(roleTrack, step)
     persistFrom((prev) => ({ ...prev, phase: 'play', stepHalf: normalHalf }))
     setPhase('play')
     setAnimKey((k) => k + 1)
@@ -563,11 +540,11 @@ function DataStackPageInner() {
     const nextIndex = progress.stepIndex + 1
     if (nextIndex < level.steps.length) {
       const nextStep = level.steps[nextIndex]!
-      // Calcul de l'index global pour détecter si une réunion doit se déclencher
+      // Compute the global index to detect whether a meeting should trigger
       const nextGlobal = globalStepIndex({ ...progress, stepIndex: nextIndex })
       const periodicMeeting = getMeetingForStep(nextGlobal, locale)
 
-      const nextHalf = startHalfForStep(nextStep, nextGlobal)
+      const nextHalf = startHalfForStep(nextStep, roleTrack, locale, nextGlobal)
       persistFrom((prev) => ({
         ...prev,
         stepIndex: nextIndex,
@@ -579,7 +556,7 @@ function DataStackPageInner() {
       setAnimKey((k) => k + 1)
       setEvalResult(null)
 
-      // Déclencher la réunion immédiatement si le step en a une
+      // Trigger the meeting immediately if the step has one
       if (periodicMeeting) {
         triggerMeeting(periodicMeeting)
       }
@@ -605,11 +582,8 @@ function DataStackPageInner() {
     if (!level) return
 
     if (stepHalf === 'meeting') {
-      // Skip meeting : on passe directement au half normal
-      const normalHalf: AdventureStepHalf =
-        roleTrack === 'governance'
-          ? (step?.governance ? 'gov' : 'tech')
-          : (step?.projectMgmt ? 'pm' : 'tech')
+      // Skip meeting: go straight to the normal half
+      const normalHalf: AdventureStepHalf = decisionHalfForTrack(roleTrack, step)
       persistFrom((prev) => ({ ...prev, phase: 'play', stepHalf: normalHalf }))
       setPhase('play')
       setAnimKey((k) => k + 1)
@@ -628,7 +602,7 @@ function DataStackPageInner() {
     const nextIndex = progress.stepIndex + 1
     if (nextIndex < level.steps.length) {
       const nextStep = level.steps[nextIndex]!
-      const nextHalf = startHalfForStep(nextStep)
+      const nextHalf = startHalfForStep(nextStep, roleTrack, locale)
       persistFrom((prev) => ({
         ...prev,
         stepIndex: nextIndex,
@@ -652,12 +626,7 @@ function DataStackPageInner() {
     }))
     setPhase('briefing')
     setAnimKey((k) => k + 1)
-    setText('')
-    setPmChoice(undefined)
-    setGovChoice(undefined)
-    setFileName(undefined)
-    setFileDataUrl(undefined)
-    setEvalResult(null)
+    clearPlayForm()
   }
 
   function onContinue() {
@@ -670,7 +639,7 @@ function DataStackPageInner() {
       return
     }
 
-    // Décision (PM ou gouvernance) → livrable technique
+    // Decision (PM or governance) -> technical deliverable
     if (stepHalf === 'pm' || stepHalf === 'gov') {
       persistFrom((prev) => ({ ...prev, phase: 'play', stepHalf: 'tech' }))
       setPhase('play')
@@ -680,7 +649,7 @@ function DataStackPageInner() {
       return
     }
 
-    // Tech = fin de tâche sur les deux pistes
+    // Tech ends the task on both tracks
     if (stepHalf === 'tech') {
       persistFrom((prev) => ({
         ...prev,
@@ -692,26 +661,21 @@ function DataStackPageInner() {
 
   function acknowledgeFireAlert() {
     if (!fireAlert) return
-    // Toutes les alertes COMEX passent par une réunion interactive
+    // All COMEX alerts go through an interactive meeting
     const meetingKind = `comex-${fireAlert}` as keyof typeof COMEX_MEETINGS
     const meeting = resolveComexMeeting(meetingKind, locale)
     if (meeting) {
-      // On garde fireAlert actif — il sera résolu dans onMeetingClose
+      // Keep fireAlert active — it will be resolved in onMeetingClose
       triggerMeeting(meeting)
     } else {
-      // Fallback : acquittement simple
+      // Fallback: simple acknowledgment
       setFireAlert(null)
     }
   }
 
   function enterNextLevel() {
     goToPhase('briefing')
-    setText('')
-    setPmChoice(undefined)
-    setGovChoice(undefined)
-    setFileName(undefined)
-    setFileDataUrl(undefined)
-    setEvalResult(null)
+    clearPlayForm()
   }
 
   function goBack() {
@@ -772,13 +736,13 @@ function DataStackPageInner() {
 
     if (phase === 'play') {
       if (stepHalf === 'tech') {
-        const backHalf = startHalfForStep(step)
+        const backHalf = startHalfForStep(step, roleTrack, locale)
         persistFrom((prev) => ({ ...prev, phase: 'play', stepHalf: backHalf }))
         setAnimKey((k) => k + 1)
         setEvalResult(null)
         return
       }
-      // Demi-étape de décision (pm ou gov)
+      // Decision half (pm or gov)
       if (progress.stepIndex > 0) {
         const nextIdx = progress.stepIndex - 1
         persistFrom((prev) => ({
@@ -831,24 +795,24 @@ function DataStackPageInner() {
   const canGoBack = phase !== 'career-pick'
   const canGoForward = phase === 'career-pick' ? hasProjectPath(progress) : true
 
-  // Retour au landing via le bouton nav "Sack Me!" (event custom ou flag sessionStorage)
+  // Return to landing via the "Sack Me!" nav button (custom event or sessionStorage flag)
   useEffect(() => {
     function goLanding() {
       sessionStorage.removeItem(GAME_LANDING_FLAG)
       setLandingStep('title')
       setAnimKey((k) => k + 1)
     }
-    // Flag positionné avant navigation (cas : arrive depuis une autre page)
+    // Flag set before navigation (case: arriving from another page)
     if (sessionStorage.getItem(GAME_LANDING_FLAG)) {
       goLanding()
     }
-    // Event custom (cas : déjà sur la page)
+    // Custom event (case: already on the page)
     window.addEventListener('sackme-go-landing', goLanding)
     return () => window.removeEventListener('sackme-go-landing', goLanding)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Déclenche la réunion quand on entre en phase play avec stepHalf === 'meeting'
+  // Trigger the meeting when entering play phase with stepHalf === 'meeting'
   useEffect(() => {
     if (phase === 'play' && stepHalf === 'meeting' && !activeMeeting) {
       const gIdx = globalStepIndex(progress)
@@ -884,16 +848,7 @@ function DataStackPageInner() {
 
   const phaseLbl = phaseLabel(level.phase, locale)
   const toolsLine = level.tools.map(toolLabel).filter(Boolean).join(' · ')
-  const briefToolsLine = toolsLine
   const brief = level.brief
-  const halfLabel =
-    stepHalf === 'pm'
-      ? t('half.pm')
-      : stepHalf === 'gov'
-        ? t('half.gov')
-        : stepHalf === 'meeting'
-          ? t('half.meeting')
-          : t('half.tech')
   const careerTitle = titleForScore(progress.career.careerScore, locale)
   const pathRoleLabel =
     progress.projectKind && progress.playerRole
@@ -927,6 +882,21 @@ function DataStackPageInner() {
     progress.levelId >= curatedCount()
       ? `M${progress.levelId}`
       : String(progress.levelId)
+  const projectKindSuffix = progress.projectKind
+    ? ` · ${projectKindLabel(progress.projectKind, locale)}`
+    : ''
+  const resumeSuffix = progress.updatedAt
+    ? ` · ${t('header.resume')} ${new Date(progress.updatedAt).toLocaleString(
+        locale === 'en' ? 'en-GB' : 'fr-FR',
+      )}`
+    : ''
+  const welcomeResumeLabel =
+    progress.started &&
+    (progress.completedStepIds.length > 0 ||
+      progress.career.wins > 0 ||
+      progress.levelId > 0)
+      ? `${t('welcome.resume')} (${hudRoleLabel} · ${t('welcome.risk')} ${fireRisk} %)`
+      : null
 
   if (landingStep) {
     return (
@@ -946,50 +916,18 @@ function DataStackPageInner() {
   return (
     <>
     <div className="adventure">
-      <header className="adventure-top">
-        <div>
-          <p className="adventure-eyebrow">{t('eyebrow')}</p>
-          <h1>{t('header.title')}</h1>
-          <p className="adventure-sub">
-            {t('header.sub')}
-            {progress.projectKind
-              ? ` · ${projectKindLabel(progress.projectKind, locale)}`
-              : ''}
-            {progress.updatedAt
-              ? ` · ${t('header.resume')} ${new Date(progress.updatedAt).toLocaleString(
-                  locale === 'en' ? 'en-GB' : 'fr-FR',
-                )}`
-              : ''}
-          </p>
-        </div>
-        <div className="adventure-top-actions">
-          <PmGameLangToggle />
-          <div className="adventure-hud">
-            {firstName ? (
-              <div className="adventure-hud-item" title={playerName}>
-                <span>{t('hud.player')}</span>
-                <strong className="adventure-hud-title">{firstName}</strong>
-              </div>
-            ) : null}
-            <div className="adventure-hud-item" title={careerTitle.blurb}>
-              <span>{t('hud.role')}</span>
-              <strong className="adventure-hud-title">{hudRoleLabel}</strong>
-            </div>
-            <div className={`adventure-hud-item adventure-hud-fire is-${fireTone}`}>
-              <span>{t('hud.fire')}</span>
-              <strong>{fireRisk} %</strong>
-            </div>
-            <div className="adventure-hud-item">
-              <span>{t('hud.career')}</span>
-              <strong>{progress.career.careerScore}</strong>
-            </div>
-            <div className="adventure-hud-item">
-              <span>{t('hud.level')}</span>
-              <strong>{hudLevelLabel}</strong>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AdventureHud
+        firstName={firstName}
+        playerName={playerName}
+        roleLabel={hudRoleLabel}
+        roleBlurb={careerTitle.blurb}
+        fireRisk={fireRisk}
+        fireTone={fireTone}
+        careerScore={progress.career.careerScore}
+        levelLabel={hudLevelLabel}
+        projectKindSuffix={projectKindSuffix}
+        resumeSuffix={resumeSuffix}
+      />
 
       <div className="adventure-progress-wrap">
         <div className="adventure-progress-bar">
@@ -998,7 +936,17 @@ function DataStackPageInner() {
         <p className="adventure-progress-label">
           {phaseLbl}
           {toolsLine ? ` · ${toolsLine}` : ''}
-          {phase === 'play' || phase === 'feedback' ? ` · ${halfLabel}` : ''}
+          {phase === 'play' || phase === 'feedback'
+            ? ` · ${
+                stepHalf === 'pm'
+                  ? t('half.pm')
+                  : stepHalf === 'gov'
+                    ? t('half.gov')
+                    : stepHalf === 'meeting'
+                      ? t('half.meeting')
+                      : t('half.tech')
+              }`
+            : ''}
           {progress.levelId >= curatedCount() ? ` · ${t('progress.endless')}` : ''}
         </p>
       </div>
@@ -1018,532 +966,146 @@ function DataStackPageInner() {
           )}
 
           {phase === 'welcome' && (
-            <section key={animKey} className="adventure-panel adventure-enter">
-              <div className="adventure-brief-block adventure-welcome">
-                <h2 ref={panelHeadingRef} tabIndex={-1}>
-                  {t('welcome.title', { firstName })}
-                </h2>
-                <p className="adventure-welcome-hook">
-                  {campaignStory
-                    ? locale === 'en'
-                      ? `${firstName ? `${firstName} — ` : ''}${campaignStory.codename} — assigned to ${homeCompany.name} (${MUTUALIS_GROUP_NAME}) as ${pathRoleLabel}. ${campaignStory.tagline.replace(/Mutualis Retail/gi, homeCompany.name)}`
-                      : `${firstName ? `${firstName} — ` : ''}${campaignStory.codename} — affecté(e) à ${homeCompany.name} (${MUTUALIS_GROUP_NAME}) en tant que ${pathRoleLabel}. ${campaignStory.tagline.replace(/Mutualis Retail/gi, homeCompany.name)}`
-                    : pathRoleLabel
-                      ? locale === 'en'
-                        ? `${firstName ? `${firstName}, ` : ''}you join as ${pathRoleLabel} at ${homeCompany.name} — ${trackLabel(roleTrack, 'en')} track.`
-                        : `${firstName ? `${firstName}, ` : ''}tu intègres le poste de ${pathRoleLabel} chez ${homeCompany.name} — piste ${trackLabel(roleTrack, 'fr')}.`
-                      : t('welcome.hook', { firstName })}
-                </p>
-                {campaignStory && (
-                  <p className="adventure-welcome-scope">
-                    <strong>
-                      {locale === 'en' ? 'Home company' : 'Entreprise d’affectation'}
-                    </strong>
-                    {` · ${homeCompany.name} · ${homeCompany.domain[locale]}`}
-                    <br />
-                    {t('careerPick.castHint')}
-                    <br />
-                    <strong>
-                      {locale === 'en' ? 'Scope' : 'Périmètre'}
-                    </strong>
-                    {` · ${campaignStory.scope}`}
-                  </p>
-                )}
-                <p>
-                  {t(roleTrack === 'governance' ? 'welcome.job.gov' : 'welcome.job.pm')}
-                </p>
-                <div className="adventure-welcome-stakes">
-                  <div>
-                    <h3>{t('welcome.goodTitle')}</h3>
-                    <p>{t('welcome.goodBody')}</p>
-                  </div>
-                  <div>
-                    <h3>{t('welcome.badTitle')}</h3>
-                    <p>{t('welcome.badBody')}</p>
-                  </div>
-                </div>
-                <p>{t(roleTrack === 'governance' ? 'welcome.flow.gov' : 'welcome.flow.pm')}</p>
-                <p className="adventure-welcome-cta-line">
-                  {t('welcome.ctaLine', { firstName })}
-                </p>
-              </div>
-              <div className="adventure-actions">
-                <button type="button" className="btn adventure-cta" onClick={startGame}>
-                  {progress.started &&
-                  (progress.completedStepIds.length > 0 ||
-                    progress.career.wins > 0 ||
-                    progress.levelId > 0)
-                    ? `${t('welcome.resume')} (${hudRoleLabel} · ${t('welcome.risk')} ${fireRisk} %)`
-                    : t('welcome.start')}
-                </button>
-              </div>
-            </section>
+            <WelcomePanel
+              animKey={animKey}
+              headingRef={panelHeadingRef}
+              firstName={firstName}
+              roleTrack={roleTrack}
+              pathRoleLabel={pathRoleLabel}
+              trackLabelText={trackLabel(roleTrack, locale)}
+              homeCompany={homeCompany}
+              campaignStory={campaignStory}
+              castHint={t('careerPick.castHint')}
+              resumeLabel={welcomeResumeLabel}
+              onStart={startGame}
+            />
           )}
 
           {phase === 'briefing' && (
-            <section key={animKey} className="adventure-panel adventure-enter">
-              <p className="adventure-level-chip">
-                {t('brief.level')} {level.id} · {level.title}
-                <span>{phaseLbl}</span>
-              </p>
-
-              <article className="adventure-brief">
-                <h2 ref={panelHeadingRef} tabIndex={-1}>
-                  {brief.projectName}
-                </h2>
-
-                <aside className="adventure-cast-chip" aria-label={t('cast.chip')}>
-                  <span className="adventure-gov-kicker">{t('cast.chip')}</span>
-                  <p>{castingChip(lotCast, locale)}</p>
-                </aside>
-
-                <div className="adventure-brief-block">
-                  <h3>{t('brief.context')}</h3>
-                  <p>{brief.context}</p>
-                </div>
-
-                <div className="adventure-brief-block">
-                  <h3>{t('brief.problem')}</h3>
-                  <p>{brief.problem}</p>
-                </div>
-
-                <div className="adventure-brief-block">
-                  <h3>{t('brief.objectives')}</h3>
-                  <ul>
-                    {brief.objectives.map((o) => (
-                      <li key={o}>{o}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="adventure-brief-block adventure-brief-consigne">
-                  <h3>{t('brief.consigne')}</h3>
-                  <p>{brief.consigne}</p>
-                </div>
-
-                <p className="adventure-brief-meta">
-                  {t('brief.tools')} : <strong>{briefToolsLine || '—'}</strong>
-                  {' · '}
-                  {totalStepsInLevel}{' '}
-                  {totalStepsInLevel > 1 ? t('brief.tasks_plural') : t('brief.tasks')}
-                </p>
-
-                {marketStack.length > 0 && (
-                  <div className="adventure-brief-block">
-                    <h3>{t('brief.roleStack')}</h3>
-                    <p className="adventure-brief-stack">
-                      {marketStack.map((t) => t.name).join(' · ')}
-                    </p>
-                  </div>
-                )}
-
-                {level.tools.length > 0 && (
-                  <div className="adventure-brief-block adventure-brief-onboarding">
-                    <h3>{t('brief.onboardingTitle')}</h3>
-                    <p>{t('brief.onboardingLead')}</p>
-                    {onboardingForTools(level.tools as ToolId[], locale).map((g) => (
-                      <ToolOnboardingPanel key={g.toolId} guide={g} defaultOpen={false} />
-                    ))}
-                  </div>
-                )}
-              </article>
-
-              <div className="adventure-actions">
-                <button type="button" className="btn adventure-cta" onClick={launchTasks}>
-                  {t('brief.launch')}
-                </button>
-              </div>
-            </section>
+            <BriefingPanel
+              animKey={animKey}
+              headingRef={panelHeadingRef}
+              level={level}
+              phaseLabelText={phaseLbl}
+              toolsLine={toolsLine}
+              lotCast={lotCast}
+              marketStackNames={marketStack.map((mt) => mt.name)}
+              onLaunch={launchTasks}
+            />
           )}
 
-          {phase === 'play' &&
-            step &&
-            roleTrack === 'pm' &&
-            stepHalf === 'pm' &&
-            pm && (
-            <section key={`${animKey}-pm`} className="adventure-panel adventure-enter">
-              <div className="adventure-level-chip">
-                {brief.projectName}
-                <span>
-                  {t('task.chip')} {progress.stepIndex + 1}/{totalStepsInLevel}
-                  {' · '}
-                  {t('pm.chip')}
-                </span>
-              </div>
-              <p className="adventure-cast-inline">{castingChip(stepCast, locale)}</p>
-
-              <article className="adventure-task">
-                <h2 ref={panelHeadingRef} tabIndex={-1}>
-                  {progress.playerRole
-                    ? roleDecisionTitle(progress.playerRole, locale)
-                    : locale === 'en'
-                      ? 'Project manager'
-                      : 'Chef de projet'}{' '}
-                  — {step.title}
-                </h2>
-                <p className="adventure-say">
-                  {progress.playerRole
-                    ? roleDecisionLead(progress.playerRole, locale)
-                    : locale === 'en'
-                      ? 'Before the technical deliverable, decide like a PM: value, capacity, risk, adaptation. Mixed frameworks: project management, Scrum, scaled agile.'
-                      : 'Avant le livrable technique, décide comme un PM : valeur, capacité, risque, adaptation. Cadres mélangés : gestion de projet, Scrum, agile à l’échelle.'}
-                </p>
-
-                {pm.scenarioTwist && (
-                  <aside className="adventure-pm-twist" role="note">
-                    <span className="adventure-gov-kicker">{t('pm.twist')}</span>
-                    <p>{pm.scenarioTwist}</p>
-                  </aside>
-                )}
-
-                <aside className="adventure-gov adventure-pm" aria-label={t('pm.chip')}>
-                  <p className="adventure-gov-link">
-                    <span className="adventure-gov-kicker">{t('pm.link')}</span>
-                    <span className="adventure-gov-link-text">{pm.link}</span>
-                  </p>
-                  <div className="adventure-gov-qcm">
-                    <p className="adventure-gov-kicker">{t('pm.qcm')}</p>
-                    <p className="adventure-gov-q-text">{pm.question}</p>
-                    <div
-                      className="adventure-gov-options"
-                      role="radiogroup"
-                      aria-label={t('pm.optionsAria')}
-                    >
-                      {pm.options.map((opt, i) => {
-                        const id = `pm-${step.id}-${i}`
-                        return (
-                          <label
-                            key={id}
-                            className={`adventure-gov-option${pmChoice === i ? ' is-selected' : ''}`}
-                            htmlFor={id}
-                          >
-                            <input
-                              id={id}
-                              type="radio"
-                              name={`pm-${step.id}`}
-                              value={i}
-                              checked={pmChoice === i}
-                              onChange={() => {
-                                setPmChoice(i)
-                                saveDraft(step.id, { pmChoice: i })
-                              }}
-                            />
-                            <span className="adventure-gov-letter" aria-hidden>
-                              {String.fromCharCode(65 + i)}
-                            </span>
-                            <span className="adventure-gov-option-text">{opt}</span>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </aside>
-
-                <div className="adventure-actions">
-                  <button
-                    type="button"
-                    className="btn adventure-cta"
-                    disabled={!canSubmit()}
-                    onClick={onValidate}
-                  >
-                    {t('pm.validate')}
-                  </button>
-                </div>
-              </article>
-            </section>
+          {phase === 'play' && step && roleTrack === 'pm' && stepHalf === 'pm' && pm && (
+            <DecisionQcmPanel
+              mode="pm"
+              animKey={animKey}
+              stepId={step.id}
+              projectName={brief.projectName}
+              stepIndex={progress.stepIndex}
+              totalSteps={totalStepsInLevel}
+              castLabel={castingChip(stepCast, locale)}
+              headingRef={panelHeadingRef}
+              title={
+                (progress.playerRole
+                  ? roleDecisionTitle(progress.playerRole, locale)
+                  : t('pm.fallbackTitle')) +
+                ' — ' +
+                step.title
+              }
+              lead={
+                progress.playerRole
+                  ? roleDecisionLead(progress.playerRole, locale)
+                  : t('pm.fallbackLead')
+              }
+              link={pm.link}
+              question={pm.question}
+              options={pm.options}
+              scenarioTwist={pm.scenarioTwist}
+              choice={pmChoice}
+              canSubmit={canSubmit()}
+              onChoice={(i) => {
+                setPmChoice(i)
+                saveDraft(step.id, { pmChoice: i })
+              }}
+              onValidate={onValidate}
+            />
           )}
 
           {phase === 'play' && step && stepHalf === 'tech' && (
-            <section key={`${animKey}-tech`} className="adventure-panel adventure-enter">
-              <div className="adventure-level-chip">
-                {brief.projectName}
-                <span>
-                  {t('task.chip')} {progress.stepIndex + 1}/{totalStepsInLevel}
-                  {step.tool ? ` · ${toolLabel(step.tool)}` : ''}
-                  {' · '}
-                  {t('tech.chip')}
-                </span>
-              </div>
-              <p className="adventure-cast-inline">{castingChip(stepCast, locale)}</p>
-
-              <article className="adventure-task">
-                <h2 ref={panelHeadingRef} tabIndex={-1}>
-                  {step.title}
-                </h2>
-
-                <div className="adventure-brief-block adventure-tech-situation">
-                  <h3>{t('tech.situation')}</h3>
-                  <p className="adventure-say">{step.say}</p>
-                </div>
-
-                <div className="adventure-brief-block adventure-tech-practice">
-                  <h3>{t('tech.practice')}</h3>
-
-                  {(step.dataset || (step.alsoDownload && step.alsoDownload.length > 0)) && (
-                    <div className="adventure-dataset">
-                      <p>
-                        <strong>{t('tech.dataset')}</strong>
-                        {step.dataset
-                          ? (() => {
-                              const h = datasetHint(step.dataset, locale)
-                              return h ? ` — ${h}` : ''
-                            })()
-                          : ''}
-                      </p>
-                      <div className="adventure-dataset-actions">
-                        {step.dataset && (
-                          <a className="btn secondary" href={step.dataset.href} download>
-                            {t('tech.download')} {step.dataset.label}
-                          </a>
-                        )}
-                        {step.alsoDownload?.map((ds) => (
-                          <a key={ds.href} className="btn secondary" href={ds.href} download>
-                            + {ds.label}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <p className="adventure-do">
-                    <strong>{t('tech.do')}</strong>
-                    <span>{step.do}</span>
-                  </p>
-
-                  {trapText && (
-                    <p className="adventure-trap" role="note">
-                      <strong>{t('tech.trap')}</strong>
-                      <span>{trapText}</span>
-                    </p>
-                  )}
-
-                  <div className="adventure-how">
-                    <strong>{t('tech.how')}</strong>
-                    <ol>
-                      {step.how.map((h) => (
-                        <li key={h}>{h}</li>
-                      ))}
-                    </ol>
-                  </div>
-
-                  {step.tool && <ToolOnboardingPanel tool={step.tool} defaultOpen />}
-
-                  {step.dataDoD && step.dataDoD.length > 0 && (
-                    <aside className="adventure-dod" aria-label={t('dod.aria')}>
-                      <strong>{t('dod.title')}</strong>
-                      <ul>
-                        {step.dataDoD.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </aside>
-                  )}
-
-                  <div className="adventure-answer">
-                    <p className="adventure-step-label">{t('tech.deliverable')}</p>
-                    <DeliverablePad
-                      expect={step.expect}
-                      text={text}
-                      fileName={fileName}
-                      fileDataUrl={fileDataUrl}
-                      onTextChange={(value) => {
-                        setText(value)
-                        saveDraft(step.id, { text: value })
-                      }}
-                      onFileChange={onFile}
-                    />
-                  </div>
-                </div>
-
-                <div className="adventure-actions">
-                  <button
-                    type="button"
-                    className="btn adventure-cta"
-                    disabled={!canSubmit()}
-                    onClick={onValidate}
-                  >
-                    {t('tech.validate')}
-                  </button>
-                </div>
-              </article>
-            </section>
+            <TechPlayPanel
+              animKey={animKey}
+              step={step}
+              projectName={brief.projectName}
+              stepIndex={progress.stepIndex}
+              totalSteps={totalStepsInLevel}
+              castLabel={castingChip(stepCast, locale)}
+              trapText={trapText}
+              headingRef={panelHeadingRef}
+              text={text}
+              fileName={fileName}
+              fileDataUrl={fileDataUrl}
+              canSubmit={canSubmit()}
+              onTextChange={(value) => {
+                setText(value)
+                saveDraft(step.id, { text: value })
+              }}
+              onFileChange={onFile}
+              onValidate={onValidate}
+            />
           )}
 
-          {phase === 'play' &&
-            step &&
-            roleTrack === 'governance' &&
-            stepHalf === 'gov' &&
-            gov && (
-            <section key={`${animKey}-gov`} className="adventure-panel adventure-enter">
-              <div className="adventure-level-chip">
-                {brief.projectName}
-                <span>
-                  {t('task.chip')} {progress.stepIndex + 1}/{totalStepsInLevel}
-                  {' · '}
-                  {t('gov.chip')}
-                </span>
-              </div>
-              <p className="adventure-cast-inline">{castingChip(stepCast, locale)}</p>
-
-              <article className="adventure-task">
-                <h2 ref={panelHeadingRef} tabIndex={-1}>
-                  {t('gov.titlePrefix')} {step.title}
-                </h2>
-                <p className="adventure-say">
-                  {t('gov.leadFirst')}
-                </p>
-
-                <aside className="adventure-gov" aria-label={t('gov.chip')}>
-                  <p className="adventure-gov-link">
-                    <span className="adventure-gov-kicker">{t('gov.link')}</span>
-                    <span className="adventure-gov-link-text">{gov.link}</span>
-                  </p>
-                  <div className="adventure-gov-qcm">
-                    <p className="adventure-gov-kicker">{t('gov.qcm')}</p>
-                    <p className="adventure-gov-q-text">{gov.question}</p>
-                    <div
-                      className="adventure-gov-options"
-                      role="radiogroup"
-                      aria-label={t('gov.optionsAria')}
-                    >
-                      {gov.options.map((opt, i) => {
-                        const id = `gov-${step.id}-${i}`
-                        return (
-                          <label
-                            key={id}
-                            className={`adventure-gov-option${govChoice === i ? ' is-selected' : ''}`}
-                            htmlFor={id}
-                          >
-                            <input
-                              id={id}
-                              type="radio"
-                              name={`gov-${step.id}`}
-                              value={i}
-                              checked={govChoice === i}
-                              onChange={() => {
-                                setGovChoice(i)
-                                saveDraft(step.id, { govChoice: i })
-                              }}
-                            />
-                            <span className="adventure-gov-letter" aria-hidden>
-                              {String.fromCharCode(65 + i)}
-                            </span>
-                            <span className="adventure-gov-option-text">{opt}</span>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </aside>
-
-                <div className="adventure-actions">
-                  <button
-                    type="button"
-                    className="btn adventure-cta"
-                    disabled={!canSubmit()}
-                    onClick={onValidate}
-                  >
-                    {t('gov.validate')}
-                  </button>
-                </div>
-              </article>
-            </section>
+          {phase === 'play' && step && roleTrack === 'governance' && stepHalf === 'gov' && gov && (
+            <DecisionQcmPanel
+              mode="gov"
+              animKey={animKey}
+              stepId={step.id}
+              projectName={brief.projectName}
+              stepIndex={progress.stepIndex}
+              totalSteps={totalStepsInLevel}
+              castLabel={castingChip(stepCast, locale)}
+              headingRef={panelHeadingRef}
+              title={`${t('gov.titlePrefix')} ${step.title}`}
+              lead={t('gov.leadFirst')}
+              link={gov.link}
+              question={gov.question}
+              options={gov.options}
+              choice={govChoice}
+              canSubmit={canSubmit()}
+              onChoice={(i) => {
+                setGovChoice(i)
+                saveDraft(step.id, { govChoice: i })
+              }}
+              onValidate={onValidate}
+            />
           )}
 
           {phase === 'feedback' && step && evalResult && (
-            <section key={`${animKey}-fb`} className="adventure-panel adventure-enter adventure-feedback">
-              <div
-                className={`adventure-result ${evalResult.passed ? 'ok' : 'ko'}`}
-                role="status"
-              >
-                <div
-                  className={`adventure-fx ${evalResult.passed ? 'fx-ok' : 'fx-ko'}`}
-                  aria-hidden
-                >
-                  {evalResult.passed ? (
-                    <span className="adventure-thumb" aria-hidden>
-                      OK
-                    </span>
-                  ) : (
-                    <span className="adventure-big-x" aria-hidden>
-                      X
-                    </span>
-                  )}
-                </div>
-                <h2 ref={panelHeadingRef} tabIndex={-1}>
-                  {stepHalf === 'pm'
-                    ? evalResult.passed
-                      ? t('pm.pass')
-                      : t('pm.fail')
-                    : stepHalf === 'gov'
-                      ? evalResult.passed
-                        ? t('gov.pass')
-                        : t('gov.fail')
-                      : evalResult.passed
-                        ? t('tech.pass')
-                        : t('tech.fail')}
-                </h2>
-                <p className="adventure-encourage">{encourage}</p>
-                <p>{evalResult.message}</p>
-              </div>
-
-              <div
-                className={`adventure-brief-block${evalResult.passed ? '' : ' adventure-correction-box'}`}
-              >
-                <h3>
-                  {stepHalf === 'pm'
-                    ? t('feedback.correctionPm')
-                    : stepHalf === 'gov'
-                      ? t('feedback.correctionGov')
-                      : evalResult.passed
-                        ? t('feedback.correctionHint')
-                        : t('feedback.correctionProposal')}
-                </h3>
-                <pre className="adventure-correction-pre">{evalResult.correction}</pre>
-                {stepHalf === 'pm' && evalResult.frameworkRef && (
-                  <p className="adventure-dama-ref">
-                    {t('ref')} {evalResult.frameworkRef}
-                  </p>
-                )}
-                {stepHalf === 'gov' && evalResult.damaRef && (
-                  <p className="adventure-dama-ref">
-                    {t('ref')} {evalResult.damaRef}
-                  </p>
-                )}
-              </div>
-
-              <div className="adventure-actions">
-                <button type="button" className="btn adventure-cta" onClick={onContinue}>
-                  {!evalResult.passed
-                    ? t('feedback.retry')
-                    : stepHalf === 'tech'
-                      ? t('feedback.nextTask')
-                      : t('feedback.toTech')}
-                </button>
-              </div>
-            </section>
+            <FeedbackPanel
+              animKey={animKey}
+              headingRef={panelHeadingRef}
+              stepHalf={stepHalf}
+              evalResult={evalResult}
+              encourage={encourage}
+              onContinue={onContinue}
+            />
           )}
 
-          {phase === 'level-complete' && (
-            <section key={animKey} className="adventure-panel adventure-enter">
-              <div className="adventure-brief-block">
-                <h2 ref={panelHeadingRef} tabIndex={-1}>
-                  {t('levelComplete.titlePrefix')} {progress.levelId - 1}
-                </h2>
-                <p>{levelFor(progress.levelId).intro}</p>
-                <p>
-                  {t('levelComplete.nextBrief')}{' '}
-                  <strong>
-                    {levelFor(progress.levelId).brief.projectName}
-                  </strong>
-                </p>
-              </div>
-              {progress.levelId === curatedCount() && pathRoleLabel && campaignStory && (
-                <CampaignCertificate
+          {phase === 'level-complete' &&
+            (() => {
+              const nextLevel = levelFor(progress.levelId)
+              return (
+                <LevelCompletePanel
+                  animKey={animKey}
+                  headingRef={panelHeadingRef}
+                  completedLevelId={progress.levelId - 1}
+                  nextIntro={nextLevel.intro}
+                  nextProjectName={nextLevel.brief.projectName}
+                  showCertificate={
+                    progress.levelId === curatedCount() && !!pathRoleLabel && !!campaignStory
+                  }
                   firstName={firstName}
-                  roleLabel={pathRoleLabel}
+                  roleLabel={pathRoleLabel ?? ''}
                   company={homeCompany.name}
-                  codename={campaignStory.codename}
+                  codename={campaignStory?.codename ?? ''}
                   score={progress.career.careerScore}
                   title={careerTitle.label}
                   shareStatus={shareStatus}
@@ -1557,15 +1119,10 @@ function DataStackPageInner() {
                       playerName: firstName || playerName,
                     }).then((r) => setShareStatus(r))
                   }}
+                  onContinue={enterNextLevel}
                 />
-              )}
-              <div className="adventure-actions">
-                <button type="button" className="btn adventure-cta" onClick={enterNextLevel}>
-                  {t('levelComplete.seeNext')}
-                </button>
-              </div>
-            </section>
-          )}
+              )
+            })()}
 
           <footer className="adventure-foot">
             <button
@@ -1597,7 +1154,7 @@ function DataStackPageInner() {
             completedStepIds={progress.completedStepIds}
             focusTools={preferTools}
             rolePlayableTools={rolePlayable}
-            roleMarketToolNames={marketStack.map((t) => t.name)}
+            roleMarketToolNames={marketStack.map((mt) => mt.name)}
           />
         )}
       </div>

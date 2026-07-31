@@ -1,0 +1,114 @@
+# Sack Me! — monthly code quality review (1st of each month)
+name: Monthly quality
+
+on:
+  schedule:
+    # 09:00 UTC on the 1st of every month
+    - cron: "0 9 1 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: monthly-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  quality-report:
+    name: Scan + open quality issue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Unit tests (health check)
+        run: npm test
+
+      - name: Production build (health check)
+        run: npm run build
+        env:
+          VITE_BASE: /sack-me/
+
+      - name: Generate quality report
+        id: report
+        env:
+          QUALITY_REPORT_PATH: quality-report.md
+          QUALITY_SUMMARY_PATH: quality-summary.json
+        run: |
+          node scripts/monthlyQualityReport.mjs
+          {
+            echo "hard=$(jq -r .hard quality-summary.json)"
+            echo "soft=$(jq -r .soft quality-summary.json)"
+            echo "todos=$(jq -r .todos quality-summary.json)"
+            echo "worst=$(jq -r .worst quality-summary.json)"
+            echo "worst_lines=$(jq -r .worstLines quality-summary.json)"
+            echo "month=$(jq -r .month quality-summary.json)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monthly-quality-report
+          path: |
+            quality-report.md
+            quality-summary.json
+          retention-days: 90
+
+      - name: Open or update GitHub issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MONTH: ${{ steps.report.outputs.month }}
+          HARD: ${{ steps.report.outputs.hard }}
+          SOFT: ${{ steps.report.outputs.soft }}
+          TODOS: ${{ steps.report.outputs.todos }}
+          WORST: ${{ steps.report.outputs.worst }}
+          WORST_LINES: ${{ steps.report.outputs.worst_lines }}
+        run: |
+          set -euo pipefail
+          TITLE="Monthly quality review — ${MONTH}"
+          LABEL="quality-monthly"
+
+          # Ensure label exists (ignore if already present)
+          gh label create "$LABEL" --color "5319E7" --description "Monthly anti-spaghetti quality pass" 2>/dev/null || true
+
+          BODY_FILE=$(mktemp)
+          {
+            echo "## Automated monthly quality pass"
+            echo
+            echo "Triggered by \`Monthly quality\` workflow on \`${GITHUB_SHA:0:7}\`."
+            echo
+            echo "| Metric | Value |"
+            echo "|--------|------:|"
+            echo "| Hard flags (≥800 lines) | **${HARD}** |"
+            echo "| Soft warnings (≥300 lines) | ${SOFT} |"
+            echo "| TODO/FIXME markers | ${TODOS} |"
+            echo "| Worst file | \`${WORST:-n/a}\` (${WORST_LINES} lines) |"
+            echo
+            echo "### Full report"
+            echo
+            cat quality-report.md
+            echo
+            echo "---"
+            echo "_Workflow: \`.github/workflows/monthly-quality.yml\` · artifact: \`monthly-quality-report\`_"
+          } > "$BODY_FILE"
+
+          EXISTING=$(gh issue list --label "$LABEL" --state open --search "$TITLE in:title" --json number,title --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file "$BODY_FILE"
+            echo "Commented on existing issue #$EXISTING"
+          else
+            gh issue create --title "$TITLE" --label "$LABEL" --body-file "$BODY_FILE"
+            echo "Created issue: $TITLE"
+          fi

@@ -16,7 +16,8 @@
     "test": "node ./node_modules/vitest/vitest.mjs run",
     "test:watch": "node ./node_modules/vitest/vitest.mjs",
     "test:e2e": "node ./node_modules/@playwright/test/cli.js test",
-    "test:e2e:install": "node ./node_modules/@playwright/test/cli.js install chromium"
+    "test:e2e:install": "node ./node_modules/@playwright/test/cli.js install chromium",
+    "quality:report": "node ./scripts/monthlyQualityReport.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",
